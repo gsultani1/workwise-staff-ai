@@ -1,9 +1,20 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 interface ScheduleCalendarProps {
   currentDate: Date;
+}
+
+interface Shift {
+  id: number;
+  employee: string;
+  role: string;
+  day: number;
+  startTime: string;
+  endTime: string;
+  type: 'shift' | 'time-off' | 'training';
 }
 
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate }) => {
@@ -31,8 +42,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate 
   
   const days = getDaysInWeek();
   
-  // Mock shift data
-  const shifts = [
+  // Mock shift data as state to allow modifications
+  const [shifts, setShifts] = useState<Shift[]>([
     {
       id: 1,
       employee: 'Sarah Johnson',
@@ -87,10 +98,39 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate 
       endTime: '5:00 PM',
       type: 'training'
     }
-  ];
+  ]);
   
   const getShiftsForDay = (dayIndex: number) => {
     return shifts.filter(shift => shift.day === dayIndex);
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, shiftId: number) => {
+    e.dataTransfer.setData('shiftId', shiftId.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Necessary to allow dropping
+  };
+
+  const handleDrop = (e: React.DragEvent, targetDayIndex: number) => {
+    e.preventDefault();
+    const shiftId = parseInt(e.dataTransfer.getData('shiftId'));
+    
+    // Update the shift day
+    setShifts(prevShifts => 
+      prevShifts.map(shift => 
+        shift.id === shiftId 
+          ? { ...shift, day: targetDayIndex }
+          : shift
+      )
+    );
+
+    // Show success notification
+    toast({
+      title: "Shift moved",
+      description: "The shift has been successfully rescheduled.",
+    });
   };
 
   return (
@@ -107,9 +147,11 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate 
           <div 
             key={index} 
             className={cn(
-              "calendar-day",
+              "calendar-day p-2",
               isToday(day) && "bg-blue-50"
             )}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, day.getDay())}
           >
             <div className="calendar-day-header flex justify-between items-center">
               <span className={cn(
@@ -117,16 +159,26 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate 
               )}>
                 {day.getDate()}
               </span>
-              {getShiftsForDay(index).length > 0 && 
+              {getShiftsForDay(day.getDay()).length > 0 && 
                 <span className="text-xs bg-workwise-blue/10 text-workwise-blue px-1 rounded-sm">
-                  {getShiftsForDay(index).length} shifts
+                  {getShiftsForDay(day.getDay()).length} shifts
                 </span>
               }
             </div>
             
             <div className="mt-1">
               {getShiftsForDay(day.getDay()).map(shift => (
-                <div key={shift.id} className={cn("calendar-event", shift.type)}>
+                <div 
+                  key={shift.id} 
+                  className={cn(
+                    "calendar-event mb-2 p-2 rounded-md text-sm border cursor-move",
+                    shift.type === 'shift' && "bg-workwise-blue/10 border-workwise-blue/20",
+                    shift.type === 'time-off' && "bg-workwise-green/10 border-workwise-green/20",
+                    shift.type === 'training' && "bg-amber-50 border-amber-200"
+                  )}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, shift.id)}
+                >
                   <div className="font-medium">{shift.employee}</div>
                   <div className="text-[10px] opacity-90">{shift.role}</div>
                   <div className="text-[10px] opacity-90">
