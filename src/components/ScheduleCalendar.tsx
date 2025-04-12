@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 
@@ -99,6 +99,20 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate 
       type: 'training'
     }
   ]);
+  
+  // Listen for new shifts from the Schedule component
+  useEffect(() => {
+    const handleAddShift = (event: Event) => {
+      const customEvent = event as CustomEvent<Shift>;
+      setShifts(prevShifts => [...prevShifts, customEvent.detail]);
+    };
+
+    document.addEventListener('addShift', handleAddShift);
+    
+    return () => {
+      document.removeEventListener('addShift', handleAddShift);
+    };
+  }, []);
   
   const getShiftsForDay = (dayIndex: number) => {
     return shifts.filter(shift => shift.day === dayIndex);

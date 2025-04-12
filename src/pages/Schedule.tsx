@@ -3,9 +3,13 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
 import { ScheduleCalendar } from '@/components/ScheduleCalendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ShiftForm, ShiftFormValues } from '@/components/ShiftForm';
+import { toast } from '@/hooks/use-toast';
 
 const Schedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isAddShiftOpen, setIsAddShiftOpen] = useState(false);
   
   const prevWeek = () => {
     const newDate = new Date(currentDate);
@@ -45,6 +49,36 @@ const Schedule = () => {
     return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
   };
 
+  const handleAddShift = (data: ShiftFormValues) => {
+    // Format time for display
+    const formatTimeDisplay = (time: string) => {
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours, 10);
+      const suffix = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${suffix}`;
+    };
+
+    // Create a new shift with the form data
+    const newShift = {
+      ...data,
+      id: Date.now(), // Use timestamp as a unique ID
+      startTime: formatTimeDisplay(data.startTime),
+      endTime: data.type === 'time-off' ? '' : formatTimeDisplay(data.endTime),
+    };
+
+    // Send the new shift to the calendar component via props
+    document.dispatchEvent(new CustomEvent('addShift', { detail: newShift }));
+
+    // Close the dialog and show a success message
+    setIsAddShiftOpen(false);
+    
+    toast({
+      title: "Shift added",
+      description: `Added ${data.employee}'s ${data.type} to the schedule.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -52,7 +86,7 @@ const Schedule = () => {
           <h1 className="text-2xl font-bold tracking-tight">Staff Schedule</h1>
           <p className="text-muted-foreground">Manage and organize your team's weekly schedule.</p>
         </div>
-        <Button className="bg-workwise-blue hover:bg-workwise-blue/90">
+        <Button className="bg-workwise-blue hover:bg-workwise-blue/90" onClick={() => setIsAddShiftOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Shift
         </Button>
@@ -77,6 +111,18 @@ const Schedule = () => {
       </div>
       
       <ScheduleCalendar currentDate={currentDate} />
+
+      <Dialog open={isAddShiftOpen} onOpenChange={setIsAddShiftOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Shift</DialogTitle>
+          </DialogHeader>
+          <ShiftForm 
+            onSubmit={handleAddShift} 
+            onCancel={() => setIsAddShiftOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
