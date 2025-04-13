@@ -1,29 +1,31 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { searchEmployees } from '@/utils/searchUtils';
+import { useStaffContext } from '@/contexts/StaffContext'; // We'll create this context
 
 export const SearchBar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const { employees, setFilteredEmployees } = useStaffContext();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      console.log('Searching for:', searchQuery);
-      // Here you would typically call a search function
-    }
-  };
+    const filteredResults = searchEmployees(employees, searchQuery);
+    setFilteredEmployees(filteredResults);
+  }, [employees, searchQuery, setFilteredEmployees]);
 
   const clearSearch = () => {
     setSearchQuery('');
+    setFilteredEmployees(employees);
   };
 
   return (
     <form onSubmit={handleSearch} className="relative w-full max-w-md mr-4 hidden md:block">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <input
-        type="text" /* Changed from type="search" to type="text" to remove browser's native X button */
+        type="text"
         placeholder="Search employees, shifts..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}

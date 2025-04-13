@@ -1,18 +1,36 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Filter } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StaffList } from '@/components/StaffList';
 import { UserManagement } from '@/components/UserManagement';
 import { useAuth } from '@/contexts/AuthContext';
+import { StaffProvider, useStaffContext } from '@/contexts/StaffContext';
 
-const Staff = () => {
+const StaffContent = () => {
   const [activeTab, setActiveTab] = useState('directory');
   const { isAdmin } = useAuth();
-  
+  const { setEmployees, setFilteredEmployees } = useStaffContext();
+
+  // In a real app, replace this with an actual API call to fetch employees
+  useEffect(() => {
+    const mockEmployees = [
+      { 
+        id: '1', 
+        firstName: 'Sarah', 
+        lastName: 'Johnson', 
+        email: 'sarah.j@example.com', 
+        department: 'Sales', 
+        role: 'Cashier' 
+      },
+      // Add more mock employees
+    ];
+    
+    setEmployees(mockEmployees);
+    setFilteredEmployees(mockEmployees);
+  }, [setEmployees, setFilteredEmployees]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -37,16 +55,8 @@ const Staff = () => {
             <div className="border-b border-border p-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search employees..."
-                    className="w-full pl-8"
-                  />
                 </div>
                 <Button variant="outline">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filters
                 </Button>
               </div>
             </div>
@@ -64,6 +74,14 @@ const Staff = () => {
         )}
       </Tabs>
     </div>
+  );
+};
+
+const Staff = () => {
+  return (
+    <StaffProvider>
+      <StaffContent />
+    </StaffProvider>
   );
 };
 
