@@ -10,15 +10,18 @@ import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { TimeOffRequest } from './TimeOffRequests';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const TimeOffRequestForm = () => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [requestType, setRequestType] = useState('vacation');
   const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { user, profile } = useAuth();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!startDate || !endDate) {
@@ -30,40 +33,58 @@ export const TimeOffRequestForm = () => {
       return;
     }
     
-    // Format dates in MM/DD/YYYY format
-    const formatDate = (date: Date) => {
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const year = date.getFullYear();
-      return `${month}/${day}/${year}`;
-    };
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to submit time off requests.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
-    // Create new request object
-    const newRequest: TimeOffRequest = {
-      id: Date.now(), // Use timestamp as a unique ID
-      employee: 'John Doe', // Would come from user context in a real app
-      type: requestType.charAt(0).toUpperCase() + requestType.slice(1),
-      startDate: formatDate(startDate),
-      endDate: formatDate(endDate),
-      dateSubmitted: formatDate(new Date()),
-      status: 'pending'
-    };
-    
-    // Dispatch event to add the new request
-    document.dispatchEvent(
-      new CustomEvent('newTimeOffRequest', { detail: newRequest })
-    );
-    
-    toast({
-      title: 'Request Submitted',
-      description: 'Your time off request has been submitted for approval.',
-    });
-    
-    // Reset form
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setRequestType('vacation');
-    setReason('');
+    try {
+      setSubmitting(true);
+      
+      // Format employee name
+      const employeeName = profile 
+        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() 
+        : 'Unknown User';
+      
+      // Create new request in Supabase
+      const { error } = await supabase
+        .from('time_off_requests')
+        .insert({
+          user_id: user.id,
+          employee_name: employeeName,
+          type: requestType.charAt(0).toUpperCase() + requestType.slice(1),
+          start_date: startDate.toISOString().split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
+          reason: reason || null
+        });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Request Submitted',
+        description: 'Your time off request has been submitted for approval.',
+      });
+      
+      // Reset form
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setRequestType('vacation');
+      setReason('');
+      
+    } catch (error: any) {
+      console.error('Error submitting time off request:', error);
+      toast({
+        title: 'Submission failed',
+        description: error.message || 'There was an error submitting your request. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
   
   return (
@@ -175,8 +196,12 @@ export const TimeOffRequestForm = () => {
         </div>
       </div>
       
-      <Button type="submit" className="w-full bg-workwise-blue hover:bg-workwise-blue/90">
-        Submit Request
+      <Button 
+        type="submit" 
+        className="w-full bg-workwise-blue hover:bg-workwise-blue/90"
+        disabled={submitting}
+      >
+        {submitting ? 'Submitting...' : 'Submit Request'}
       </Button>
     </form>
   );

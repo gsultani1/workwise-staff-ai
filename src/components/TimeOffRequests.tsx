@@ -1,95 +1,143 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface TimeOffRequest {
-  id: number;
-  employee: string;
+  id: string;
+  employee_name: string;
   type: string;
-  startDate: string;
-  endDate: string;
-  dateSubmitted: string;
+  start_date: string;
+  end_date: string;
+  date_submitted: string;
   status: 'pending' | 'approved' | 'denied';
 }
 
 export const TimeOffRequests = () => {
-  const [requests, setRequests] = useState<TimeOffRequest[]>([
-    {
-      id: 1,
-      employee: 'Robert Davis',
-      type: 'Vacation',
-      startDate: '04/15/2025',
-      endDate: '04/18/2025',
-      dateSubmitted: '04/01/2025',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      employee: 'Lisa Kim',
-      type: 'Sick Leave',
-      startDate: '04/12/2025',
-      endDate: '04/12/2025',
-      dateSubmitted: '04/11/2025',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      employee: 'Carlos Mendez',
-      type: 'Personal Leave',
-      startDate: '04/20/2025',
-      endDate: '04/21/2025',
-      dateSubmitted: '04/05/2025',
-      status: 'pending'
-    }
-  ]);
+  const [requests, setRequests] = useState<TimeOffRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAdmin, isManager } = useAuth();
+  const canApprove = isAdmin || isManager;
   
-  // Register for new time off request events
-  React.useEffect(() => {
-    const handleNewRequest = (event: Event) => {
-      const customEvent = event as CustomEvent<TimeOffRequest>;
-      setRequests(prev => [...prev, customEvent.detail]);
+  // Fetch time off requests
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('time_off_requests')
+          .select('*')
+          .order('date_submitted', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (data) {
+          setRequests(data as TimeOffRequest[]);
+        }
+      } catch (error: any) {
+        console.error('Error fetching time off requests:', error);
+        toast({
+          title: 'Failed to load requests',
+          description: error.message || 'There was an error loading the time off requests.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
     };
 
-    document.addEventListener('newTimeOffRequest', handleNewRequest);
+    fetchRequests();
+    
+    // Set up real-time subscription for updates
+    const channel = supabase
+      .channel('table-db-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'time_off_requests' 
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setRequests(prev => [payload.new as TimeOffRequest, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setRequests(prev => 
+              prev.map(request => 
+                request.id === payload.new.id ? (payload.new as TimeOffRequest) : request
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setRequests(prev => 
+              prev.filter(request => request.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
     
     return () => {
-      document.removeEventListener('newTimeOffRequest', handleNewRequest);
+      supabase.removeChannel(channel);
     };
   }, []);
   
-  const handleApprove = (id: number) => {
-    setRequests(prev => 
-      prev.map(request => 
-        request.id === id ? { ...request, status: 'approved' } : request
-      )
-    );
-    
-    toast({
-      title: 'Request Approved',
-      description: 'The time off request has been approved.',
-    });
+  const handleApprove = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('time_off_requests')
+        .update({ status: 'approved' })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Request Approved',
+        description: 'The time off request has been approved.',
+      });
+    } catch (error: any) {
+      console.error('Error approving request:', error);
+      toast({
+        title: 'Action failed',
+        description: error.message || 'There was an error approving the request.',
+        variant: 'destructive',
+      });
+    }
   };
   
-  const handleDeny = (id: number) => {
-    setRequests(prev => 
-      prev.map(request => 
-        request.id === id ? { ...request, status: 'denied' } : request
-      )
-    );
-    
-    toast({
-      title: 'Request Denied',
-      description: 'The time off request has been denied.',
-      variant: 'destructive',
-    });
+  const handleDeny = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('time_off_requests')
+        .update({ status: 'denied' })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Request Denied',
+        description: 'The time off request has been denied.',
+        variant: 'destructive',
+      });
+    } catch (error: any) {
+      console.error('Error denying request:', error);
+      toast({
+        title: 'Action failed',
+        description: error.message || 'There was an error denying the request.',
+        variant: 'destructive',
+      });
+    }
   };
   
   // Filter to show only pending requests
   const pendingRequests = requests.filter(request => request.status === 'pending');
+  
+  if (loading) {
+    return <div className="py-8 text-center text-muted-foreground">Loading requests...</div>;
+  }
   
   return (
     <div className="space-y-4">
@@ -104,42 +152,44 @@ export const TimeOffRequests = () => {
             <div className="py-4">
               <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                  <h4 className="text-lg font-medium">{request.employee}</h4>
+                  <h4 className="text-lg font-medium">{request.employee_name}</h4>
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant="outline" className="bg-workwise-blue/10 hover:bg-workwise-blue/20 text-workwise-blue">
                       {request.type}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      Submitted on {request.dateSubmitted}
+                      Submitted on {new Date(request.date_submitted).toLocaleDateString()}
                     </span>
                   </div>
                   <p className="text-sm">
-                    {request.startDate === request.endDate 
-                      ? `Date: ${request.startDate}` 
-                      : `Date Range: ${request.startDate} - ${request.endDate}`}
+                    {request.start_date === request.end_date 
+                      ? `Date: ${request.start_date}` 
+                      : `Date Range: ${request.start_date} - ${request.end_date}`}
                   </p>
                 </div>
                 
-                <div className="flex items-center space-x-2 self-end md:self-center">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-workwise-green text-workwise-green hover:bg-workwise-green/10 hover:text-workwise-green"
-                    onClick={() => handleApprove(request.id)}
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => handleDeny(request.id)}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Deny
-                  </Button>
-                </div>
+                {canApprove && (
+                  <div className="flex items-center space-x-2 self-end md:self-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-workwise-green text-workwise-green hover:bg-workwise-green/10 hover:text-workwise-green"
+                      onClick={() => handleApprove(request.id)}
+                    >
+                      <Check className="mr-2 h-4 w-4" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleDeny(request.id)}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Deny
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </React.Fragment>

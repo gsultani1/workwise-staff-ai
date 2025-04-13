@@ -75,6 +75,45 @@ export type Database = {
         }
         Relationships: []
       }
+      time_off_requests: {
+        Row: {
+          date_submitted: string
+          employee_name: string
+          end_date: string
+          id: string
+          reason: string | null
+          start_date: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          date_submitted?: string
+          employee_name: string
+          end_date: string
+          id?: string
+          reason?: string | null
+          start_date: string
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          date_submitted?: string
+          employee_name?: string
+          end_date?: string
+          id?: string
+          reason?: string | null
+          start_date?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
