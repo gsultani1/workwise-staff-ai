@@ -23,7 +23,7 @@ export const SearchBar: React.FC = () => {
     <form onSubmit={handleSearch} className="relative w-full max-w-md mr-4 hidden md:block">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <input
-        type="search"
+        type="text" /* Changed from type="search" to type="text" to remove browser's native X button */
         placeholder="Search employees, shifts..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
