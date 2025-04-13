@@ -1,13 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 
+export interface TimeOffRequest {
+  id: number;
+  employee: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  dateSubmitted: string;
+  status: 'pending' | 'approved' | 'denied';
+}
+
 export const TimeOffRequests = () => {
-  const requests = [
+  const [requests, setRequests] = useState<TimeOffRequest[]>([
     {
       id: 1,
       employee: 'Robert Davis',
@@ -35,9 +45,29 @@ export const TimeOffRequests = () => {
       dateSubmitted: '04/05/2025',
       status: 'pending'
     }
-  ];
+  ]);
+  
+  // Register for new time off request events
+  React.useEffect(() => {
+    const handleNewRequest = (event: Event) => {
+      const customEvent = event as CustomEvent<TimeOffRequest>;
+      setRequests(prev => [...prev, customEvent.detail]);
+    };
+
+    document.addEventListener('newTimeOffRequest', handleNewRequest);
+    
+    return () => {
+      document.removeEventListener('newTimeOffRequest', handleNewRequest);
+    };
+  }, []);
   
   const handleApprove = (id: number) => {
+    setRequests(prev => 
+      prev.map(request => 
+        request.id === id ? { ...request, status: 'approved' } : request
+      )
+    );
+    
     toast({
       title: 'Request Approved',
       description: 'The time off request has been approved.',
@@ -45,6 +75,12 @@ export const TimeOffRequests = () => {
   };
   
   const handleDeny = (id: number) => {
+    setRequests(prev => 
+      prev.map(request => 
+        request.id === id ? { ...request, status: 'denied' } : request
+      )
+    );
+    
     toast({
       title: 'Request Denied',
       description: 'The time off request has been denied.',
@@ -52,14 +88,17 @@ export const TimeOffRequests = () => {
     });
   };
   
+  // Filter to show only pending requests
+  const pendingRequests = requests.filter(request => request.status === 'pending');
+  
   return (
     <div className="space-y-4">
-      {requests.length === 0 ? (
+      {pendingRequests.length === 0 ? (
         <div className="text-center p-6">
           <p className="text-muted-foreground">No pending time off requests.</p>
         </div>
       ) : (
-        requests.map((request, index) => (
+        pendingRequests.map((request, index) => (
           <React.Fragment key={request.id}>
             {index > 0 && <Separator />}
             <div className="py-4">

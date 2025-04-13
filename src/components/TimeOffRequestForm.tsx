@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +10,7 @@ import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { TimeOffRequest } from './TimeOffRequests';
 
 export const TimeOffRequestForm = () => {
   const [startDate, setStartDate] = useState<Date>();
@@ -30,7 +30,29 @@ export const TimeOffRequestForm = () => {
       return;
     }
     
-    // Submit request logic would go here
+    // Format dates in MM/DD/YYYY format
+    const formatDate = (date: Date) => {
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    };
+    
+    // Create new request object
+    const newRequest: TimeOffRequest = {
+      id: Date.now(), // Use timestamp as a unique ID
+      employee: 'John Doe', // Would come from user context in a real app
+      type: requestType.charAt(0).toUpperCase() + requestType.slice(1),
+      startDate: formatDate(startDate),
+      endDate: formatDate(endDate),
+      dateSubmitted: formatDate(new Date()),
+      status: 'pending'
+    };
+    
+    // Dispatch event to add the new request
+    document.dispatchEvent(
+      new CustomEvent('newTimeOffRequest', { detail: newRequest })
+    );
     
     toast({
       title: 'Request Submitted',
