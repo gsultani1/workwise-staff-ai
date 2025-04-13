@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import { AppLayout } from "./components/AppLayout";
 import Auth from "./pages/Auth";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { StaffProvider } from "./contexts/StaffContext";
 
 const queryClient = new QueryClient();
 
@@ -58,11 +59,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <StaffProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </StaffProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
@@ -6,9 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StaffList } from '@/components/StaffList';
 import { UserManagement } from '@/components/UserManagement';
 import { useAuth } from '@/contexts/AuthContext';
-import { StaffProvider, useStaffContext } from '@/contexts/StaffContext';
+import { useStaffContext } from '@/contexts/StaffContext';
 
-const StaffContent = () => {
+const Staff = () => {
   const [activeTab, setActiveTab] = useState('directory');
   const { isAdmin } = useAuth();
   const { setEmployees, setFilteredEmployees } = useStaffContext();
@@ -74,14 +75,6 @@ const StaffContent = () => {
         )}
       </Tabs>
     </div>
-  );
-};
-
-const Staff = () => {
-  return (
-    <StaffProvider>
-      <StaffContent />
-    </StaffProvider>
   );
 };
 
