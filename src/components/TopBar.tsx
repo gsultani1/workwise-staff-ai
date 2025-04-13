@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { SearchBar } from './SearchBar';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { UserProfileDropdown } from './UserProfileDropdown';
 
@@ -32,10 +31,8 @@ const sampleNotifications = [
 export const TopBar: React.FC = () => {
   return (
     <header className="border-b border-border bg-card px-4 py-3">
-      <div className="flex items-center justify-between">
-        <SearchBar />
-        
-        <div className="flex items-center ml-auto gap-2">
+      <div className="flex items-center justify-end">
+        <div className="flex items-center gap-2">
           <NotificationsDropdown initialNotifications={sampleNotifications} />
           <UserProfileDropdown />
         </div>

@@ -17,15 +17,20 @@ const Staff = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Staff Directory</h1>
           <p className="text-muted-foreground">Manage your team members and their roles.</p>
         </div>
-        <Button className="bg-workwise-blue hover:bg-workwise-blue/90">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Employee
-        </Button>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="w-full md:w-64">
+            <SearchBar />
+          </div>
+          <Button className="bg-workwise-blue hover:bg-workwise-blue/90 whitespace-nowrap">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Employee
+          </Button>
+        </div>
       </div>
       
       <Tabs defaultValue="directory" onValueChange={setActiveTab}>
@@ -36,14 +41,6 @@ const Staff = () => {
         
         <TabsContent value="directory" className="mt-4">
           <Card className="border-border">
-            <div className="border-b border-border p-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <SearchBar />
-                </div>
-              </div>
-            </div>
-            
             {loading ? (
               <div className="flex justify-center items-center p-8">
                 <div className="text-lg text-muted-foreground">Loading employees...</div>
