@@ -1,5 +1,4 @@
-
-import { Employee } from '@/types/employee'; // We'll assume this type exists
+import { Employee } from '@/types/employee';
 
 export const searchEmployees = (employees: Employee[], query: string): Employee[] => {
   if (!query.trim()) return employees;

@@ -2,36 +2,33 @@
 import React, { useState, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { searchEmployees } from '@/utils/searchUtils';
 import { useStaffContext } from '@/contexts/StaffContext';
 
 export const SearchBar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { employees, setFilteredEmployees } = useStaffContext();
+  const { searchEmployees } = useStaffContext();
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    const filteredResults = searchEmployees(employees, searchQuery);
-    setFilteredEmployees(filteredResults);
-  }, [employees, searchQuery, setFilteredEmployees]);
+    searchEmployees(searchQuery);
+  }, [searchQuery, searchEmployees]);
 
   const clearSearch = () => {
     setSearchQuery('');
-    setFilteredEmployees(employees);
+    searchEmployees('');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
     
-    // Filter results as user types
-    if (value.trim() === '') {
-      setFilteredEmployees(employees);
-    } else {
-      const filteredResults = searchEmployees(employees, value);
-      setFilteredEmployees(filteredResults);
-    }
+    // Use backend search with a small debounce
+    const timeoutId = setTimeout(() => {
+      searchEmployees(value);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   };
 
   return (

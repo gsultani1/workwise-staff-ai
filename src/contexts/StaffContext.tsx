@@ -11,6 +11,7 @@ type StaffContextType = {
   setEmployees: (employees: Employee[]) => void;
   setFilteredEmployees: (employees: Employee[]) => void;
   fetchEmployees: () => Promise<void>;
+  searchEmployees: (query: string) => Promise<void>;
 };
 
 const StaffContext = createContext<StaffContextType | undefined>(undefined);
@@ -57,6 +58,61 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  // Backend search functionality
+  const searchEmployees = async (query: string) => {
+    if (!query.trim()) {
+      // If query is empty, show all employees
+      setFilteredEmployees(employees);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const queryLower = query.toLowerCase().trim();
+      
+      // Use Supabase's ilike operator for case-insensitive search
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .or(`first_name.ilike.%${queryLower}%,last_name.ilike.%${queryLower}%,email.ilike.%${queryLower}%,department.ilike.%${queryLower}%,role.ilike.%${queryLower}%`);
+
+      if (error) {
+        throw error;
+      }
+
+      // Transform data to match our Employee type
+      const transformedData: Employee[] = data.map(emp => ({
+        id: emp.id,
+        firstName: emp.first_name,
+        lastName: emp.last_name,
+        email: emp.email,
+        department: emp.department,
+        role: emp.role,
+        status: emp.status,
+        hireDate: emp.hire_date
+      }));
+
+      setFilteredEmployees(transformedData);
+    } catch (error: any) {
+      console.error('Error searching employees:', error.message);
+      toast({
+        title: 'Error searching employees',
+        description: error.message,
+        variant: 'destructive',
+      });
+      // Fallback to client-side filtering in case of error
+      const filteredResults = employees.filter(employee => 
+        employee.firstName.toLowerCase().includes(query.toLowerCase()) ||
+        employee.lastName.toLowerCase().includes(query.toLowerCase()) ||
+        employee.email.toLowerCase().includes(query.toLowerCase()) ||
+        employee.department.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredEmployees(filteredResults);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch employees when the context is initialized
   useEffect(() => {
     fetchEmployees();
@@ -70,7 +126,8 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         loading,
         setEmployees, 
         setFilteredEmployees,
-        fetchEmployees
+        fetchEmployees,
+        searchEmployees
       }}
     >
       {children}
