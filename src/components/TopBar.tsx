@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, Check, Search, X } from 'lucide-react';
+import { Bell, Check, Search, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // Sample notifications data
 const sampleNotifications = [
@@ -40,6 +42,8 @@ const sampleNotifications = [
 
 export const TopBar = () => {
   const [notifications, setNotifications] = useState(sampleNotifications);
+  const { profile, signOut, isAdmin, isManager } = useAuth();
+  const navigate = useNavigate();
   
   const unreadCount = notifications.filter(notif => !notif.read).length;
   
@@ -68,6 +72,11 @@ export const TopBar = () => {
     toast({
       title: "All notifications marked as read",
     });
+  };
+
+  const getInitials = () => {
+    if (!profile?.first_name && !profile?.last_name) return 'U';
+    return `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`;
   };
 
   return (
@@ -161,6 +170,30 @@ export const TopBar = () => {
                 }}
               >
                 View all notifications
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* User Profile Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="relative">
+                <div className="w-6 h-6 rounded-full bg-workwise-blue flex items-center justify-center text-white text-xs font-medium">
+                  {getInitials()}
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="text-red-500">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
