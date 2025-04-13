@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -8,29 +8,12 @@ import { StaffList } from '@/components/StaffList';
 import { UserManagement } from '@/components/UserManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStaffContext } from '@/contexts/StaffContext';
+import { SearchBar } from '@/components/SearchBar';
 
 const Staff = () => {
   const [activeTab, setActiveTab] = useState('directory');
   const { isAdmin } = useAuth();
-  const { setEmployees, setFilteredEmployees } = useStaffContext();
-
-  // In a real app, replace this with an actual API call to fetch employees
-  useEffect(() => {
-    const mockEmployees = [
-      { 
-        id: '1', 
-        firstName: 'Sarah', 
-        lastName: 'Johnson', 
-        email: 'sarah.j@example.com', 
-        department: 'Sales', 
-        role: 'Cashier' 
-      },
-      // Add more mock employees
-    ];
-    
-    setEmployees(mockEmployees);
-    setFilteredEmployees(mockEmployees);
-  }, [setEmployees, setFilteredEmployees]);
+  const { loading } = useStaffContext();
 
   return (
     <div className="space-y-6">
@@ -56,13 +39,18 @@ const Staff = () => {
             <div className="border-b border-border p-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
+                  <SearchBar />
                 </div>
-                <Button variant="outline">
-                </Button>
               </div>
             </div>
             
-            <StaffList />
+            {loading ? (
+              <div className="flex justify-center items-center p-8">
+                <div className="text-lg text-muted-foreground">Loading employees...</div>
+              </div>
+            ) : (
+              <StaffList />
+            )}
           </Card>
         </TabsContent>
         

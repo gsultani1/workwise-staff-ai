@@ -6,4 +6,6 @@ export type Employee = {
   email: string;
   department: string;
   role: string;
+  status?: string;
+  hireDate?: string;
 };
