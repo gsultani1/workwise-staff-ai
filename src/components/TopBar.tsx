@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Bell, Check, Search, X, User } from 'lucide-react';
+import { Bell, Check, Search, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
