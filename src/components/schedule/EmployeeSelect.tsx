@@ -9,6 +9,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from '@/components/ui/command';
 import {
   Popover,
@@ -52,33 +53,35 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
         ) : (
           <Command>
             <CommandInput placeholder="Search employee..." />
-            {employeesList.length === 0 ? (
-              <CommandEmpty>No employees available.</CommandEmpty>
-            ) : (
-              <>
-                <CommandEmpty>No employee found.</CommandEmpty>
-                <CommandGroup>
-                  {employeesList.filter(Boolean).map((employee) => (
-                    <CommandItem
-                      key={employee.id}
-                      value={employee.id}
-                      onSelect={(currentValue) => {
-                        onChange(currentValue === value ? '' : currentValue);
-                        setOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          value === employee.id ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      {employee.firstName} {employee.lastName} - {employee.jobPosition}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </>
-            )}
+            <CommandList>
+              {employeesList.length === 0 ? (
+                <CommandEmpty>No employees available.</CommandEmpty>
+              ) : (
+                <>
+                  <CommandEmpty>No employee found.</CommandEmpty>
+                  <CommandGroup>
+                    {employeesList.filter(Boolean).map((employee) => (
+                      <CommandItem
+                        key={employee.id}
+                        value={employee.id}
+                        onSelect={(currentValue) => {
+                          onChange(currentValue === value ? '' : currentValue);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            value === employee.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        {employee.firstName} {employee.lastName} - {employee.jobPosition}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </>
+              )}
+            </CommandList>
           </Command>
         )}
       </PopoverContent>
