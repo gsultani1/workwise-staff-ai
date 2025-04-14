@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -128,8 +129,12 @@ const Auth = () => {
     setResetLoading(true);
     
     try {
+      // Use the current window location origin instead of hardcoded localhost
+      const currentUrl = window.location.origin;
+      const redirectTo = `${currentUrl}/auth`;
+      
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: redirectTo,
       });
       
       if (error) throw error;
