@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
@@ -7,19 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-
-export interface TimeOffRequest {
-  id: string;
-  employee_id: string;
-  type: string;
-  start_date: string;
-  end_date: string;
-  date_submitted: string;
-  status: 'pending' | 'approved' | 'denied';
-  // Employee details joined from the employees table
-  employee_first_name?: string;
-  employee_last_name?: string;
-}
+import { TimeOffRequest } from '@/types/employee';
 
 export const TimeOffRequests = () => {
   const [requests, setRequests] = useState<TimeOffRequest[]>([]);
@@ -46,11 +33,12 @@ export const TimeOffRequests = () => {
         if (error) throw error;
         
         if (data) {
-          // Transform the data to flatten the employee details
-          const transformedData = data.map(req => ({
+          // Transform the data to flatten the employee details and ensure type safety
+          const transformedData: TimeOffRequest[] = data.map(req => ({
             ...req,
             employee_first_name: req.employees?.first_name || 'Unknown',
             employee_last_name: req.employees?.last_name || 'User',
+            status: req.status as "pending" | "approved" | "denied", // Cast to the specific allowed values
           }));
           
           setRequests(transformedData);
@@ -86,7 +74,7 @@ export const TimeOffRequests = () => {
             setRequests(prev => 
               prev.map(request => 
                 request.id === payload.new.id ? 
-                  { ...request, ...payload.new } : 
+                  { ...request, ...payload.new, status: payload.new.status as "pending" | "approved" | "denied" } : 
                   request
               )
             );
@@ -117,10 +105,11 @@ export const TimeOffRequests = () => {
         if (error) throw error;
         
         if (data) {
-          const newRequest = {
+          const newRequest: TimeOffRequest = {
             ...data,
             employee_first_name: data.employees?.first_name || 'Unknown',
             employee_last_name: data.employees?.last_name || 'User',
+            status: data.status as "pending" | "approved" | "denied",
           };
           
           setRequests(prev => [newRequest, ...prev]);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -7,7 +6,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,14 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface UserProfile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  roles: string[];
-}
+import { UserProfile } from '@/types/employee';
 
 export const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -41,31 +32,22 @@ export const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // First get all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
+      // Query the staff_details view which joins profiles, employees, and roles
+      const { data: staffDetails, error: staffError } = await supabase
+        .from('staff_details')
         .select('*');
       
-      if (profilesError) throw profilesError;
+      if (staffError) throw staffError;
 
-      // Then get all roles
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-      
-      if (rolesError) throw rolesError;
-
-      // Combine the data
-      const usersWithRoles = profiles.map(profile => {
-        const userRoles = roles
-          .filter(role => role.user_id === profile.id)
-          .map(role => role.role);
-        
-        return {
-          ...profile,
-          roles: userRoles
-        };
-      });
+      // Transform the data to match our UserProfile type
+      const usersWithRoles: UserProfile[] = staffDetails.map(staff => ({
+        id: staff.user_id || '',
+        first_name: staff.first_name || null,
+        last_name: staff.last_name || null,
+        email: staff.email || null,
+        employee_id: staff.employee_id || '',
+        roles: staff.roles || [],
+      }));
 
       setUsers(usersWithRoles);
     } catch (error: any) {

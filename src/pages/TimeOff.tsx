@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,17 +6,7 @@ import { TimeOffRequests } from '@/components/TimeOffRequests';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
-
-interface TimeOffHistory {
-  id: string;
-  employee_id: string;
-  employee_first_name?: string;
-  employee_last_name?: string;
-  type: string;
-  start_date: string;
-  end_date: string;
-  status: 'approved' | 'denied';
-}
+import { TimeOffHistory } from '@/types/employee';
 
 const TimeOff = () => {
   // Track active tab for better user experience
@@ -46,11 +35,12 @@ const TimeOff = () => {
           if (error) throw error;
           
           if (data) {
-            // Transform data to include employee names
-            const transformedData = data.map(item => ({
+            // Transform data to include employee names and ensure type safety
+            const transformedData: TimeOffHistory[] = data.map(item => ({
               ...item,
               employee_first_name: item.employees?.first_name || 'Unknown',
               employee_last_name: item.employees?.last_name || 'User',
+              status: item.status as "approved" | "denied",
             }));
             
             setHistoryItems(transformedData);

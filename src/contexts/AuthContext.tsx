@@ -3,17 +3,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Profile } from '@/types/employee';
 
 interface UserRole {
   role: 'admin' | 'manager' | 'employee';
-}
-
-interface Profile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  avatar_url: string | null;
 }
 
 interface AuthContextType {
@@ -81,7 +74,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
 
         if (profileError) throw profileError;
-        setProfile(profileData);
+        
+        // Join with employees table to get first_name, last_name, email
+        const { data: employeeData, error: employeeError } = await supabase
+          .from('employees')
+          .select('first_name, last_name, email')
+          .eq('id', profileData.employee_id)
+          .single();
+          
+        if (employeeError) throw employeeError;
+          
+        // Set complete profile with data from both tables
+        setProfile({
+          ...profileData,
+          first_name: employeeData.first_name,
+          last_name: employeeData.last_name,
+          email: employeeData.email
+        });
 
         // Fetch roles
         const { data: rolesData, error: rolesError } = await supabase
