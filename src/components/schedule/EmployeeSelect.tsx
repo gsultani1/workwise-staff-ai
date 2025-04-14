@@ -57,9 +57,9 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           <Command>
             <CommandInput placeholder="Search employee..." />
             <CommandEmpty>No employee found.</CommandEmpty>
-            {employeesList.length > 0 ? (
-              <CommandGroup>
-                {employeesList.map((employee) => (
+            <CommandGroup>
+              {employeesList && employeesList.length > 0 ? (
+                employeesList.map((employee) => (
                   <CommandItem
                     key={employee.id}
                     value={employee.id}
@@ -76,11 +76,11 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                     />
                     {employee.firstName} {employee.lastName} - {employee.jobPosition}
                   </CommandItem>
-                ))}
-              </CommandGroup>
-            ) : (
-              <div className="py-6 text-center text-sm">No employees available.</div>
-            )}
+                ))
+              ) : (
+                <div className="py-6 text-center text-sm">No employees available.</div>
+              )}
+            </CommandGroup>
           </Command>
         )}
       </PopoverContent>
