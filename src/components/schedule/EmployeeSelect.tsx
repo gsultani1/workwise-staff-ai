@@ -64,6 +64,10 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                       onChange(currentValue);
                       setOpen(false);
                     }}
+                    onMouseDown={(e) => {
+                      // Prevent default to ensure click is processed before popover closes
+                      e.preventDefault();
+                    }}
                     className="cursor-pointer hover:bg-accent"
                   >
                     <Check
