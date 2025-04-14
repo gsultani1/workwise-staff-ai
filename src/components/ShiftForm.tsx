@@ -72,7 +72,13 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
             <FormItem>
               <FormLabel htmlFor="employee-select">Employee</FormLabel>
               <FormControl>
-                <EmployeeSelect value={field.value} onChange={field.onChange} />
+                <EmployeeSelect 
+                  value={field.value} 
+                  onChange={(value) => {
+                    console.log('ShiftForm - Employee selected:', value);
+                    field.onChange(value);
+                  }} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
