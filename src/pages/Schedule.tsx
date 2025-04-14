@@ -7,11 +7,13 @@ import { ShiftForm, ShiftFormValues } from '@/components/ShiftForm';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useStaffContext } from '@/contexts/StaffContext';
 
 const Schedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddShiftOpen, setIsAddShiftOpen] = useState(false);
   const { isAdmin, isManager } = useAuth();
+  const { employees } = useStaffContext();
   
   const hasManagementPrivileges = isAdmin || isManager;
   
