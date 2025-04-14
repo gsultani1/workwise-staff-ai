@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle, AlertCircle } from 'lucide-react';
 import { ScheduleCalendar } from '@/components/ScheduleCalendar';
@@ -13,7 +14,12 @@ const Schedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddShiftOpen, setIsAddShiftOpen] = useState(false);
   const { isAdmin, isManager } = useAuth();
-  const { employees } = useStaffContext();
+  const { employees, fetchEmployees, loading } = useStaffContext();
+  
+  // Fetch employees when the component mounts
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
   
   const hasManagementPrivileges = isAdmin || isManager;
   
@@ -55,8 +61,16 @@ const Schedule = () => {
   };
 
   const handleAddShift = (data: ShiftFormValues) => {
-    const employee = employees.find(emp => emp.id === data.employeeId);
-    if (!employee) return;
+    const employeesList = employees || [];
+    const employee = employeesList.find(emp => emp.id === data.employeeId);
+    if (!employee) {
+      toast({
+        title: "Error adding shifts",
+        description: "Selected employee not found.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     data.shifts.forEach(shift => {
       const newShift = {
@@ -139,10 +153,14 @@ const Schedule = () => {
             <DialogHeader>
               <DialogTitle>Add New Shift</DialogTitle>
             </DialogHeader>
-            <ShiftForm 
-              onSubmit={handleAddShift} 
-              onCancel={() => setIsAddShiftOpen(false)} 
-            />
+            {loading ? (
+              <div className="py-8 text-center">Loading employee data...</div>
+            ) : (
+              <ShiftForm 
+                onSubmit={handleAddShift} 
+                onCancel={() => setIsAddShiftOpen(false)} 
+              />
+            )}
           </DialogContent>
         </Dialog>
       )}

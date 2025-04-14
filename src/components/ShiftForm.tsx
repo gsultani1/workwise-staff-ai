@@ -37,7 +37,7 @@ interface ShiftFormProps {
 }
 
 export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
-  const { employees } = useStaffContext();
+  const { loading } = useStaffContext();
   const form = useForm<ShiftFormValues>({
     defaultValues: {
       employeeId: '',
@@ -52,6 +52,10 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
     },
   });
 
+  if (loading) {
+    return <div className="py-4 text-center">Loading employee data...</div>;
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -61,7 +65,9 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Employee</FormLabel>
-              <EmployeeSelect value={field.value} onChange={field.onChange} />
+              <FormControl>
+                <EmployeeSelect value={field.value} onChange={field.onChange} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

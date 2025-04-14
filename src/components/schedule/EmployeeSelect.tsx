@@ -25,7 +25,7 @@ interface EmployeeSelectProps {
 
 export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
   const [open, setOpen] = React.useState(false);
-  const { employees } = useStaffContext();
+  const { employees, loading } = useStaffContext();
   
   // Ensure employees is always an array, even if undefined
   const employeesList = employees || [];
@@ -52,7 +52,9 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
         <Command>
           <CommandInput placeholder="Search employee..." />
           <CommandEmpty>No employee found.</CommandEmpty>
-          {employeesList.length > 0 ? (
+          {loading ? (
+            <div className="py-6 text-center text-sm">Loading employees...</div>
+          ) : employeesList.length > 0 ? (
             <CommandGroup>
               {employeesList.map((employee) => (
                 <CommandItem
@@ -74,7 +76,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
               ))}
             </CommandGroup>
           ) : (
-            <CommandEmpty>Loading employees...</CommandEmpty>
+            <div className="py-6 text-center text-sm">No employees available.</div>
           )}
         </Command>
       </PopoverContent>
