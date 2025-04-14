@@ -145,14 +145,18 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                   });
                   
                   return (
-                    <div
+                    <button
                       key={employee.id}
+                      type="button"
                       className={cn(
-                        "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none",
+                        "w-full text-left relative flex cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none",
                         "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                         isSelected && "bg-accent text-accent-foreground"
                       )}
-                      onClick={() => handleEmployeeSelect(employee.id)}
+                      onClick={() => {
+                        console.log('[EmployeeSelect] Employee item clicked:', employee.id);
+                        handleEmployeeSelect(employee.id);
+                      }}
                       onKeyDown={(e) => {
                         console.log('[EmployeeSelect] Key pressed on employee:', e.key);
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -176,7 +180,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                           <div className="text-xs text-muted-foreground">{employee.jobPosition}</div>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
