@@ -27,10 +27,10 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
   const [open, setOpen] = React.useState(false);
   const { employees, loading } = useStaffContext();
   
-  // Ensure employees is always an array, even if undefined
-  const employeesList = employees || [];
+  // Ensure employees is always a valid array
+  const employeesList = Array.isArray(employees) ? employees : [];
   
-  const selectedEmployee = employeesList.find((employee) => employee.id === value);
+  const selectedEmployee = employeesList.find((employee) => employee?.id === value);
   const displayValue = selectedEmployee 
     ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` 
     : 'Select employee...';
@@ -58,24 +58,26 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
             <CommandInput placeholder="Search employee..." />
             <CommandEmpty>No employee found.</CommandEmpty>
             <CommandGroup>
-              {employeesList && employeesList.length > 0 ? (
+              {employeesList.length > 0 ? (
                 employeesList.map((employee) => (
-                  <CommandItem
-                    key={employee.id}
-                    value={employee.id}
-                    onSelect={(currentValue) => {
-                      onChange(currentValue === value ? '' : currentValue);
-                      setOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        'mr-2 h-4 w-4',
-                        value === employee.id ? 'opacity-100' : 'opacity-0'
-                      )}
-                    />
-                    {employee.firstName} {employee.lastName} - {employee.jobPosition}
-                  </CommandItem>
+                  employee && (
+                    <CommandItem
+                      key={employee.id}
+                      value={employee.id}
+                      onSelect={(currentValue) => {
+                        onChange(currentValue === value ? '' : currentValue);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          value === employee.id ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      {employee.firstName} {employee.lastName} - {employee.jobPosition}
+                    </CommandItem>
+                  )
                 ))
               ) : (
                 <div className="py-6 text-center text-sm">No employees available.</div>
