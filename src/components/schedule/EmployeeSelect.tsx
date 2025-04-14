@@ -47,7 +47,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-full p-0 z-50">
         {loading ? (
           <div className="py-6 text-center text-sm">Loading employees...</div>
         ) : (
@@ -64,7 +64,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                       onChange(currentValue);
                       setOpen(false);
                     }}
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-accent"
                   >
                     <Check
                       className={cn(
