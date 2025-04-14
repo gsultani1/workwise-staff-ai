@@ -125,14 +125,12 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           
           {loading ? (
             <div className="py-6 text-center text-sm">
-              {console.log('[EmployeeSelect] Showing loading state')}
               Loading employees...
             </div>
           ) : (
             <>
               {filteredEmployees.length === 0 && (
                 <div className="py-6 text-center text-sm">
-                  {console.log('[EmployeeSelect] No matching employees found')}
                   No employee found.
                 </div>
               )}
