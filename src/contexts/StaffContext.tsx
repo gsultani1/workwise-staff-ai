@@ -32,14 +32,14 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         throw error;
       }
 
-      // Transform data to match our Employee type with updated field names
+      // Transform data to match our Employee type
       const transformedData: Employee[] = data.map(emp => ({
         id: emp.id,
         firstName: emp.first_name,
         lastName: emp.last_name,
         email: emp.email,
         department: emp.department,
-        jobPosition: emp.job_position, // Updated from role to job_position
+        jobPosition: emp.job_position,
         status: emp.status,
         hireDate: emp.hire_date
       }));
@@ -71,7 +71,6 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const queryLower = query.toLowerCase().trim();
       
       // Use Supabase's ilike operator for case-insensitive search
-      // Updated to use job_position instead of role
       const { data, error } = await supabase
         .from('employees')
         .select('*')
@@ -81,14 +80,14 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         throw error;
       }
 
-      // Transform data to match our Employee type with updated field names
+      // Transform data to match our Employee type
       const transformedData: Employee[] = data.map(emp => ({
         id: emp.id,
         firstName: emp.first_name,
         lastName: emp.last_name,
         email: emp.email,
         department: emp.department,
-        jobPosition: emp.job_position, // Updated from role to job_position
+        jobPosition: emp.job_position,
         status: emp.status,
         hireDate: emp.hire_date
       }));

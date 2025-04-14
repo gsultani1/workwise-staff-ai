@@ -10,7 +10,9 @@ import { useEffect } from 'react';
 
 interface TimeOffHistory {
   id: string;
-  employee_name: string;
+  employee_id: string;
+  employee_first_name?: string;
+  employee_last_name?: string;
   type: string;
   start_date: string;
   end_date: string;
@@ -31,14 +33,27 @@ const TimeOff = () => {
           setLoading(true);
           const { data, error } = await supabase
             .from('time_off_requests')
-            .select('*')
+            .select(`
+              *,
+              employees:employee_id (
+                first_name,
+                last_name
+              )
+            `)
             .or('status.eq.approved,status.eq.denied')
             .order('updated_at', { ascending: false });
           
           if (error) throw error;
           
           if (data) {
-            setHistoryItems(data as TimeOffHistory[]);
+            // Transform data to include employee names
+            const transformedData = data.map(item => ({
+              ...item,
+              employee_first_name: item.employees?.first_name || 'Unknown',
+              employee_last_name: item.employees?.last_name || 'User',
+            }));
+            
+            setHistoryItems(transformedData);
           }
         } catch (error) {
           console.error('Error fetching time off history:', error);
@@ -96,7 +111,9 @@ const TimeOff = () => {
                     <div key={item.id} className={`py-4 ${index > 0 ? 'border-t' : ''}`}>
                       <div className="flex flex-col md:flex-row justify-between gap-4">
                         <div>
-                          <h4 className="text-lg font-medium">{item.employee_name}</h4>
+                          <h4 className="text-lg font-medium">
+                            {item.employee_first_name} {item.employee_last_name}
+                          </h4>
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="outline" className="bg-workwise-blue/10 hover:bg-workwise-blue/20 text-workwise-blue">
                               {item.type}

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,13 +13,52 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface EmployeeData {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
 export const TimeOffRequestForm = () => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [requestType, setRequestType] = useState('vacation');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
+  
+  useEffect(() => {
+    const fetchEmployeeData = async () => {
+      if (!user) return;
+      
+      try {
+        // Fetch the employee_id for the current user from profiles
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('employee_id')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileError) throw profileError;
+        
+        // Fetch employee details using the employee_id
+        const { data: employeeData, error: employeeError } = await supabase
+          .from('employees')
+          .select('id, first_name, last_name')
+          .eq('id', profileData.employee_id)
+          .single();
+        
+        if (employeeError) throw employeeError;
+        
+        setEmployeeData(employeeData);
+      } catch (error) {
+        console.error('Error fetching employee data:', error);
+      }
+    };
+    
+    fetchEmployeeData();
+  }, [user]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +72,7 @@ export const TimeOffRequestForm = () => {
       return;
     }
     
-    if (!user) {
+    if (!user || !employeeData) {
       toast({
         title: 'Authentication required',
         description: 'You must be logged in to submit time off requests.',
@@ -45,17 +84,12 @@ export const TimeOffRequestForm = () => {
     try {
       setSubmitting(true);
       
-      // Format employee name
-      const employeeName = profile 
-        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() 
-        : 'Unknown User';
-      
       // Create new request in Supabase
       const { error } = await supabase
         .from('time_off_requests')
         .insert({
           user_id: user.id,
-          employee_name: employeeName,
+          employee_id: employeeData.id,
           type: requestType.charAt(0).toUpperCase() + requestType.slice(1),
           start_date: startDate.toISOString().split('T')[0],
           end_date: endDate.toISOString().split('T')[0],
@@ -199,7 +233,7 @@ export const TimeOffRequestForm = () => {
       <Button 
         type="submit" 
         className="w-full bg-workwise-blue hover:bg-workwise-blue/90"
-        disabled={submitting}
+        disabled={submitting || !employeeData}
       >
         {submitting ? 'Submitting...' : 'Submit Request'}
       </Button>

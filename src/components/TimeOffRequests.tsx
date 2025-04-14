@@ -10,12 +10,15 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface TimeOffRequest {
   id: string;
-  employee_name: string;
+  employee_id: string;
   type: string;
   start_date: string;
   end_date: string;
   date_submitted: string;
   status: 'pending' | 'approved' | 'denied';
+  // Employee details joined from the employees table
+  employee_first_name?: string;
+  employee_last_name?: string;
 }
 
 export const TimeOffRequests = () => {
@@ -24,20 +27,33 @@ export const TimeOffRequests = () => {
   const { isAdmin, isManager } = useAuth();
   const canApprove = isAdmin || isManager;
   
-  // Fetch time off requests
+  // Fetch time off requests with employee details
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
         const { data, error } = await supabase
           .from('time_off_requests')
-          .select('*')
+          .select(`
+            *,
+            employees:employee_id (
+              first_name,
+              last_name
+            )
+          `)
           .order('date_submitted', { ascending: false });
         
         if (error) throw error;
         
         if (data) {
-          setRequests(data as TimeOffRequest[]);
+          // Transform the data to flatten the employee details
+          const transformedData = data.map(req => ({
+            ...req,
+            employee_first_name: req.employees?.first_name || 'Unknown',
+            employee_last_name: req.employees?.last_name || 'User',
+          }));
+          
+          setRequests(transformedData);
         }
       } catch (error: any) {
         console.error('Error fetching time off requests:', error);
@@ -64,11 +80,14 @@ export const TimeOffRequests = () => {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setRequests(prev => [payload.new as TimeOffRequest, ...prev]);
+            // Fetch the full record with employee details
+            fetchRequestWithEmployeeDetails(payload.new.id);
           } else if (payload.eventType === 'UPDATE') {
             setRequests(prev => 
               prev.map(request => 
-                request.id === payload.new.id ? (payload.new as TimeOffRequest) : request
+                request.id === payload.new.id ? 
+                  { ...request, ...payload.new } : 
+                  request
               )
             );
           } else if (payload.eventType === 'DELETE') {
@@ -79,6 +98,37 @@ export const TimeOffRequests = () => {
         }
       )
       .subscribe();
+    
+    // Helper function to fetch a single request with employee details
+    const fetchRequestWithEmployeeDetails = async (requestId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('time_off_requests')
+          .select(`
+            *,
+            employees:employee_id (
+              first_name,
+              last_name
+            )
+          `)
+          .eq('id', requestId)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          const newRequest = {
+            ...data,
+            employee_first_name: data.employees?.first_name || 'Unknown',
+            employee_last_name: data.employees?.last_name || 'User',
+          };
+          
+          setRequests(prev => [newRequest, ...prev]);
+        }
+      } catch (error) {
+        console.error('Error fetching request details:', error);
+      }
+    };
     
     return () => {
       supabase.removeChannel(channel);
@@ -152,7 +202,9 @@ export const TimeOffRequests = () => {
             <div className="py-4">
               <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                  <h4 className="text-lg font-medium">{request.employee_name}</h4>
+                  <h4 className="text-lg font-medium">
+                    {request.employee_first_name} {request.employee_last_name}
+                  </h4>
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant="outline" className="bg-workwise-blue/10 hover:bg-workwise-blue/20 text-workwise-blue">
                       {request.type}

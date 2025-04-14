@@ -51,30 +51,21 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          email: string | null
-          employee_id: string | null
-          first_name: string | null
+          employee_id: string
           id: string
-          last_name: string | null
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           avatar_url?: string | null
-          email?: string | null
-          employee_id?: string | null
-          first_name?: string | null
+          employee_id: string
           id: string
-          last_name?: string | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           avatar_url?: string | null
-          email?: string | null
-          employee_id?: string | null
-          first_name?: string | null
+          employee_id?: string
           id?: string
-          last_name?: string | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -89,7 +80,7 @@ export type Database = {
       time_off_requests: {
         Row: {
           date_submitted: string
-          employee_name: string
+          employee_id: string
           end_date: string
           id: string
           reason: string | null
@@ -101,7 +92,7 @@ export type Database = {
         }
         Insert: {
           date_submitted?: string
-          employee_name: string
+          employee_id: string
           end_date: string
           id?: string
           reason?: string | null
@@ -113,7 +104,7 @@ export type Database = {
         }
         Update: {
           date_submitted?: string
-          employee_name?: string
+          employee_id?: string
           end_date?: string
           id?: string
           reason?: string | null
@@ -123,7 +114,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "time_off_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

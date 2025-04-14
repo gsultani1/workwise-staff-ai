@@ -5,7 +5,7 @@ export type Employee = {
   lastName: string;
   email: string;
   department: string;
-  jobPosition: string;  // Updated from "role" to "jobPosition"
+  jobPosition: string;
   status?: string;
   hireDate?: string;
 };
