@@ -5,6 +5,7 @@ import { toast } from '@/hooks/use-toast';
 
 interface ScheduleCalendarProps {
   currentDate: Date;
+  readOnly?: boolean;
 }
 
 interface Shift {
@@ -17,7 +18,7 @@ interface Shift {
   type: 'shift' | 'time-off' | 'training';
 }
 
-export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate }) => {
+export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate, readOnly = false }) => {
   // Generate days for the week starting with the first day of the week (Sunday)
   const getDaysInWeek = () => {
     const days = [];
@@ -120,14 +121,18 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate 
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, shiftId: number) => {
+    if (readOnly) return; // Prevent drag if readonly
     e.dataTransfer.setData('shiftId', shiftId.toString());
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (readOnly) return; // Prevent dragover if readonly
     e.preventDefault(); // Necessary to allow dropping
   };
 
   const handleDrop = (e: React.DragEvent, targetDayIndex: number) => {
+    if (readOnly) return; // Prevent drop if readonly
+    
     e.preventDefault();
     const shiftId = parseInt(e.dataTransfer.getData('shiftId'));
     
@@ -185,12 +190,13 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate 
                 <div 
                   key={shift.id} 
                   className={cn(
-                    "calendar-event mb-2 p-2 rounded-md text-sm border cursor-move",
+                    "calendar-event mb-2 p-2 rounded-md text-sm border",
                     shift.type === 'shift' && "bg-workwise-blue/10 border-workwise-blue/20",
                     shift.type === 'time-off' && "bg-workwise-green/10 border-workwise-green/20",
-                    shift.type === 'training' && "bg-amber-50 border-amber-200"
+                    shift.type === 'training' && "bg-amber-50 border-amber-200",
+                    !readOnly && "cursor-move"
                   )}
-                  draggable
+                  draggable={!readOnly}
                   onDragStart={(e) => handleDragStart(e, shift.id)}
                 >
                   <div className="font-medium">{shift.employee}</div>

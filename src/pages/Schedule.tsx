@@ -1,15 +1,21 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle, AlertCircle } from 'lucide-react';
 import { ScheduleCalendar } from '@/components/ScheduleCalendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ShiftForm, ShiftFormValues } from '@/components/ShiftForm';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Schedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddShiftOpen, setIsAddShiftOpen] = useState(false);
+  const { isAdmin, isManager } = useAuth();
+  
+  // Determine if user has management privileges (admin or manager)
+  const hasManagementPrivileges = isAdmin || isManager;
   
   const prevWeek = () => {
     const newDate = new Date(currentDate);
@@ -86,11 +92,23 @@ const Schedule = () => {
           <h1 className="text-2xl font-bold tracking-tight">Staff Schedule</h1>
           <p className="text-muted-foreground">Manage and organize your team's weekly schedule.</p>
         </div>
-        <Button className="bg-workwise-blue hover:bg-workwise-blue/90" onClick={() => setIsAddShiftOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Shift
-        </Button>
+        {hasManagementPrivileges ? (
+          <Button className="bg-workwise-blue hover:bg-workwise-blue/90" onClick={() => setIsAddShiftOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Shift
+          </Button>
+        ) : null}
       </div>
+      
+      {!hasManagementPrivileges && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Employee View</AlertTitle>
+          <AlertDescription>
+            As an employee, you can view the schedule but cannot make changes.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="flex items-center justify-between bg-card p-4 rounded-lg border border-border">
         <Button variant="outline" size="icon" onClick={prevWeek}>
@@ -110,19 +128,21 @@ const Schedule = () => {
         </Button>
       </div>
       
-      <ScheduleCalendar currentDate={currentDate} />
+      <ScheduleCalendar currentDate={currentDate} readOnly={!hasManagementPrivileges} />
 
-      <Dialog open={isAddShiftOpen} onOpenChange={setIsAddShiftOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Shift</DialogTitle>
-          </DialogHeader>
-          <ShiftForm 
-            onSubmit={handleAddShift} 
-            onCancel={() => setIsAddShiftOpen(false)} 
-          />
-        </DialogContent>
-      </Dialog>
+      {hasManagementPrivileges && (
+        <Dialog open={isAddShiftOpen} onOpenChange={setIsAddShiftOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Shift</DialogTitle>
+            </DialogHeader>
+            <ShiftForm 
+              onSubmit={handleAddShift} 
+              onCancel={() => setIsAddShiftOpen(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
