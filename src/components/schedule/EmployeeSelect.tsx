@@ -23,7 +23,6 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
   const { employees, loading } = useStaffContext();
   const searchInputRef = useRef<HTMLInputElement>(null);
   
-  // Focus search input when dropdown opens
   useEffect(() => {
     if (open && searchInputRef.current) {
       setTimeout(() => {
@@ -51,7 +50,6 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
   const handleEmployeeSelect = (employeeId: string) => {
     onChange(employeeId);
     setOpen(false);
-    setSearchQuery('');
   };
 
   return (
