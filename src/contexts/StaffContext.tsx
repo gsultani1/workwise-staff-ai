@@ -14,9 +14,19 @@ type StaffContextType = {
   searchEmployees: (query: string) => Promise<void>;
 };
 
-const StaffContext = createContext<StaffContextType | undefined>(undefined);
+// Create context with default values
+const StaffContext = createContext<StaffContextType>({
+  employees: [],
+  filteredEmployees: [],
+  loading: false,
+  setEmployees: () => {},
+  setFilteredEmployees: () => {},
+  fetchEmployees: async () => {},
+  searchEmployees: async () => {},
+});
 
 export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Initialize with empty arrays, not undefined
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);

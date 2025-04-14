@@ -26,6 +26,14 @@ interface EmployeeSelectProps {
 export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
   const [open, setOpen] = React.useState(false);
   const { employees } = useStaffContext();
+  
+  // Ensure employees is always an array, even if undefined
+  const employeesList = employees || [];
+  
+  const selectedEmployee = employeesList.find((employee) => employee.id === value);
+  const displayValue = selectedEmployee 
+    ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` 
+    : 'Select employee...';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -36,11 +44,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {value
-            ? employees.find((employee) => employee.id === value)
-              ? `${employees.find((employee) => employee.id === value)?.firstName} ${employees.find((employee) => employee.id === value)?.lastName}`
-              : 'Select employee...'
-            : 'Select employee...'}
+          {displayValue}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -48,26 +52,30 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
         <Command>
           <CommandInput placeholder="Search employee..." />
           <CommandEmpty>No employee found.</CommandEmpty>
-          <CommandGroup>
-            {employees.map((employee) => (
-              <CommandItem
-                key={employee.id}
-                value={employee.id}
-                onSelect={(currentValue) => {
-                  onChange(currentValue === value ? '' : currentValue);
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    value === employee.id ? 'opacity-100' : 'opacity-0'
-                  )}
-                />
-                {employee.firstName} {employee.lastName} - {employee.jobPosition}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          {employeesList.length > 0 ? (
+            <CommandGroup>
+              {employeesList.map((employee) => (
+                <CommandItem
+                  key={employee.id}
+                  value={employee.id}
+                  onSelect={(currentValue) => {
+                    onChange(currentValue === value ? '' : currentValue);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === employee.id ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  {employee.firstName} {employee.lastName} - {employee.jobPosition}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : (
+            <CommandEmpty>Loading employees...</CommandEmpty>
+          )}
         </Command>
       </PopoverContent>
     </Popover>
