@@ -64,8 +64,8 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                       <CommandItem
                         key={employee.id}
                         value={employee.id}
-                        onSelect={(currentValue) => {
-                          onChange(currentValue === value ? '' : currentValue);
+                        onSelect={() => {
+                          onChange(employee.id);
                           setOpen(false);
                         }}
                       >
