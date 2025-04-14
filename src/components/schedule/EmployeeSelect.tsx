@@ -27,15 +27,11 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
   const [open, setOpen] = React.useState(false);
   const { employees, loading } = useStaffContext();
   
-  // Ensure employees is always a valid array
   const employeesList = Array.isArray(employees) ? employees : [];
-  
   const selectedEmployee = employeesList.find((employee) => employee?.id === value);
   const displayValue = selectedEmployee 
     ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` 
     : 'Select employee...';
-
-  console.log('EmployeeSelect - employees:', employeesList.length, 'loading:', loading);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,11 +52,13 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
         ) : (
           <Command>
             <CommandInput placeholder="Search employee..." />
-            <CommandEmpty>No employee found.</CommandEmpty>
-            <CommandGroup>
-              {employeesList.length > 0 ? (
-                employeesList.map((employee) => (
-                  employee && (
+            {employeesList.length === 0 ? (
+              <CommandEmpty>No employees available.</CommandEmpty>
+            ) : (
+              <>
+                <CommandEmpty>No employee found.</CommandEmpty>
+                <CommandGroup>
+                  {employeesList.filter(Boolean).map((employee) => (
                     <CommandItem
                       key={employee.id}
                       value={employee.id}
@@ -77,12 +75,10 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                       />
                       {employee.firstName} {employee.lastName} - {employee.jobPosition}
                     </CommandItem>
-                  )
-                ))
-              ) : (
-                <div className="py-6 text-center text-sm">No employees available.</div>
-              )}
-            </CommandGroup>
+                  ))}
+                </CommandGroup>
+              </>
+            )}
           </Command>
         )}
       </PopoverContent>
