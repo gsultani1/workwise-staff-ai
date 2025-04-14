@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Employee } from '@/types/employee';
 import { toast } from '@/hooks/use-toast';
@@ -31,9 +31,10 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     setLoading(true);
     try {
+      console.log('Fetching employees...');
       const { data, error } = await supabase
         .from('employees')
         .select('*');
@@ -41,6 +42,8 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (error) {
         throw error;
       }
+
+      console.log('Employees fetched:', data);
 
       // Transform data to match our Employee type
       const transformedData: Employee[] = data.map(emp => ({
@@ -66,7 +69,7 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Backend search functionality
   const searchEmployees = async (query: string) => {
@@ -126,8 +129,9 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Fetch employees when the context is initialized
   useEffect(() => {
+    console.log('StaffContext mounted, fetching employees...');
     fetchEmployees();
-  }, []);
+  }, [fetchEmployees]);
 
   return (
     <StaffContext.Provider 

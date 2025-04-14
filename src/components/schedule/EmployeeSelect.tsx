@@ -35,6 +35,8 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
     ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` 
     : 'Select employee...';
 
+  console.log('EmployeeSelect - employees:', employeesList.length, 'loading:', loading);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

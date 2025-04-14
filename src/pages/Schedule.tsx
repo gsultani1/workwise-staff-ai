@@ -18,8 +18,14 @@ const Schedule = () => {
   
   // Fetch employees when the component mounts
   useEffect(() => {
+    console.log('Schedule component mounted, fetching employees...');
     fetchEmployees();
   }, [fetchEmployees]);
+
+  // Log the employees whenever they change
+  useEffect(() => {
+    console.log('Schedule - employees updated:', employees?.length || 0, 'loading:', loading);
+  }, [employees, loading]);
   
   const hasManagementPrivileges = isAdmin || isManager;
   
@@ -155,11 +161,15 @@ const Schedule = () => {
             </DialogHeader>
             {loading ? (
               <div className="py-8 text-center">Loading employee data...</div>
-            ) : (
+            ) : employees && employees.length > 0 ? (
               <ShiftForm 
                 onSubmit={handleAddShift} 
                 onCancel={() => setIsAddShiftOpen(false)} 
               />
+            ) : (
+              <div className="py-8 text-center">
+                No employees available. Please add employees before creating shifts.
+              </div>
             )}
           </DialogContent>
         </Dialog>
