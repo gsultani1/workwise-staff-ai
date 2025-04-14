@@ -145,12 +145,11 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                   });
                   
                   return (
-                    <button
+                    <div
                       key={employee.id}
-                      type="button"
                       className={cn(
                         "w-full text-left relative flex cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none",
-                        "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                        "hover:bg-accent hover:text-accent-foreground",
                         isSelected && "bg-accent text-accent-foreground"
                       )}
                       onClick={() => {
@@ -180,7 +179,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                           <div className="text-xs text-muted-foreground">{employee.jobPosition}</div>
                         </div>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
