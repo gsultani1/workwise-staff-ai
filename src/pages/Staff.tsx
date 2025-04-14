@@ -20,7 +20,7 @@ const Staff = () => {
       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Staff Directory</h1>
-          <p className="text-muted-foreground">Manage your team members and their roles.</p>
+          <p className="text-muted-foreground">Manage your team members and their access levels.</p>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="w-full md:w-64">
@@ -36,7 +36,7 @@ const Staff = () => {
       <Tabs defaultValue="directory" onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="directory">Directory</TabsTrigger>
-          {isAdmin && <TabsTrigger value="roles">Role Management</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="roles">Access Management</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="directory" className="mt-4">

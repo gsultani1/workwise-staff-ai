@@ -40,7 +40,7 @@ export const StaffList = () => {
           <thead>
             <tr className="border-b border-border">
               <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
-              <th className="text-left py-3 px-4 font-medium text-sm">Role</th>
+              <th className="text-left py-3 px-4 font-medium text-sm">Position</th>
               <th className="text-left py-3 px-4 font-medium text-sm">Department</th>
               <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
               <th className="text-left py-3 px-4 font-medium text-sm">Hire Date</th>
@@ -61,7 +61,7 @@ export const StaffList = () => {
                     </div>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-sm">{employee.role}</td>
+                <td className="py-3 px-4 text-sm">{employee.jobPosition}</td>
                 <td className="py-3 px-4 text-sm">{employee.department}</td>
                 <td className="py-3 px-4">
                   <Badge variant="outline" className={getStatusColor(employee.status)}>

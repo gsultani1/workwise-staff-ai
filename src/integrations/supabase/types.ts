@@ -17,8 +17,8 @@ export type Database = {
           first_name: string
           hire_date: string
           id: string
+          job_position: string
           last_name: string
-          role: string
           status: string
           updated_at: string
         }
@@ -29,8 +29,8 @@ export type Database = {
           first_name: string
           hire_date?: string
           id?: string
+          job_position: string
           last_name: string
-          role: string
           status?: string
           updated_at?: string
         }
@@ -41,8 +41,8 @@ export type Database = {
           first_name?: string
           hire_date?: string
           id?: string
+          job_position?: string
           last_name?: string
-          role?: string
           status?: string
           updated_at?: string
         }
@@ -52,6 +52,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           email: string | null
+          employee_id: string | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -60,6 +61,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           email?: string | null
+          employee_id?: string | null
           first_name?: string | null
           id: string
           last_name?: string | null
@@ -68,12 +70,21 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           email?: string | null
+          employee_id?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       time_off_requests: {
         Row: {
@@ -137,9 +148,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      staff_details: {
+        Row: {
+          department: string | null
+          email: string | null
+          employee_id: string | null
+          first_name: string | null
+          hire_date: string | null
+          job_position: string | null
+          last_name: string | null
+          roles: Database["public"]["Enums"]["app_role"][] | null
+          status: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_employee_roles: {
+        Args: { user_id: string }
+        Returns: {
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]

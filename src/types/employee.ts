@@ -5,7 +5,7 @@ export type Employee = {
   lastName: string;
   email: string;
   department: string;
-  role: string;
+  jobPosition: string;
   status?: string;
   hireDate?: string;
 };
