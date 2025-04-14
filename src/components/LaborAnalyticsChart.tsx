@@ -1,37 +1,87 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const LaborAnalyticsChart = () => {
   const { isAdmin, isManager } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [laborData, setLaborData] = useState([]);
   
-  // Sample data - full financial data for managers and admins
-  const fullData = [
-    { month: 'Jan', sales: 15000, cashiers: 3800, sales_associates: 4200, managers: 6000, customer_service: 2400 },
-    { month: 'Feb', sales: 16200, cashiers: 3900, sales_associates: 4400, managers: 6000, customer_service: 2500 },
-    { month: 'Mar', sales: 17500, cashiers: 4200, sales_associates: 4600, managers: 6000, customer_service: 2700 },
-    { month: 'Apr', sales: 18420, cashiers: 4500, sales_associates: 4700, managers: 6000, customer_service: 3220 },
-    { month: 'May', sales: 17800, cashiers: 4300, sales_associates: 4500, managers: 6000, customer_service: 3000 },
-    { month: 'Jun', sales: 19000, cashiers: 4600, sales_associates: 4800, managers: 6000, customer_service: 3600 },
-  ];
-
+  useEffect(() => {
+    const fetchLaborData = async () => {
+      try {
+        // In a real application, you would query from a labor_costs or similar table
+        // For this demo, we'll simulate with existing employees table to get department data
+        const { data, error } = await supabase
+          .from('employees')
+          .select('department, job_position')
+          .order('department');
+        
+        if (error) throw error;
+        
+        // Transform employee data into labor cost format
+        // In a real scenario, this would come from actual labor cost records
+        const departments = {};
+        data.forEach(employee => {
+          if (!departments[employee.department]) {
+            departments[employee.department] = 0;
+          }
+          departments[employee.department]++;
+        });
+        
+        // Generate labor cost data for 6 months (using department data as base multiplier)
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+        const formattedData = months.map((month, index) => {
+          const monthData = { month };
+          // Generate simulated labor costs based on department employee counts
+          Object.keys(departments).forEach(dept => {
+            const baseCost = departments[dept] * 1000; // Simulate: each employee costs $1000 base
+            const randomFactor = 0.9 + (Math.random() * 0.2); // Random fluctuation
+            monthData[dept.toLowerCase().replace(' ', '_')] = Math.round(baseCost * randomFactor);
+          });
+          return monthData;
+        });
+        
+        setLaborData(formattedData);
+      } catch (error) {
+        console.error('Error fetching labor data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchLaborData();
+  }, []);
+  
   // Limited data for employees - without financial information
-  const limitedData = fullData.map(item => ({
-    month: item.month,
-    cashiers: 'Restricted',
-    sales_associates: 'Restricted',
-    managers: 'Restricted',
-    customer_service: 'Restricted'
-  }));
+  const limitedData = laborData.map(item => {
+    const restrictedItem = { month: item.month };
+    Object.keys(item).forEach(key => {
+      if (key !== 'month') {
+        restrictedItem[key] = 'Restricted';
+      }
+    });
+    return restrictedItem;
+  });
 
   // Use appropriate data based on role
-  const data = (isAdmin || isManager) ? fullData : limitedData;
+  const data = (isAdmin || isManager) ? laborData : limitedData;
 
   // For employee view, use a different formatter that doesn't show dollar values
   const employeeTooltipFormatter = (value: any) => {
     return value === 'Restricted' ? 'Restricted' : `$${value}`;
   };
+
+  if (loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -48,10 +98,15 @@ export const LaborAnalyticsChart = () => {
             employeeTooltipFormatter} 
         />
         <Legend />
-        <Bar dataKey="cashiers" name="Cashiers" stackId="a" fill="#4B9CD3" />
-        <Bar dataKey="sales_associates" name="Sales Associates" stackId="a" fill="#36A2EB" />
-        <Bar dataKey="managers" name="Managers" stackId="a" fill="#4E79A7" />
-        <Bar dataKey="customer_service" name="Customer Service" stackId="a" fill="#83BFFF" />
+        {Object.keys(data[0] || {}).filter(key => key !== 'month').map((key, index) => (
+          <Bar 
+            key={key} 
+            dataKey={key} 
+            name={key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} 
+            stackId="a" 
+            fill={`hsl(${210 + (index * 30)}, 70%, 50%)`} 
+          />
+        ))}
       </BarChart>
     </ResponsiveContainer>
   );
