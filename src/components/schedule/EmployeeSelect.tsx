@@ -34,6 +34,12 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
     ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` 
     : 'Select employee...';
 
+  // Create direct click handlers for each employee
+  const handleEmployeeClick = (employeeId: string) => {
+    onChange(employeeId);
+    setOpen(false);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -42,6 +48,8 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
+          id="employee-select"
+          name="employee-select"
         >
           {displayValue}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -57,18 +65,16 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
               <CommandEmpty>No employee found.</CommandEmpty>
               <CommandGroup>
                 {employeesList.filter(Boolean).map((employee) => (
-                  <CommandItem
+                  // Use a div with onClick for direct selection
+                  <div 
                     key={employee.id}
-                    value={employee.id}
-                    onSelect={(currentValue) => {
-                      onChange(currentValue);
-                      setOpen(false);
-                    }}
-                    onMouseDown={(e) => {
-                      // Prevent default to ensure click is processed before popover closes
-                      e.preventDefault();
-                    }}
-                    className="cursor-pointer hover:bg-accent"
+                    className={cn(
+                      "flex items-center px-2 py-1.5 text-sm relative cursor-pointer hover:bg-accent",
+                      value === employee.id && "bg-accent"
+                    )}
+                    onClick={() => handleEmployeeClick(employee.id)}
+                    role="option"
+                    aria-selected={value === employee.id}
                   >
                     <Check
                       className={cn(
@@ -77,7 +83,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                       )}
                     />
                     {employee.firstName} {employee.lastName} - {employee.jobPosition}
-                  </CommandItem>
+                  </div>
                 ))}
               </CommandGroup>
             </CommandList>

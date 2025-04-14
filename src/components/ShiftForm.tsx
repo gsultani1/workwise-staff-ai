@@ -70,7 +70,7 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
           name="employeeId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Employee</FormLabel>
+              <FormLabel htmlFor="employee-select">Employee</FormLabel>
               <FormControl>
                 <EmployeeSelect value={field.value} onChange={field.onChange} />
               </FormControl>
@@ -84,10 +84,10 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
           name="type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Shift Type</FormLabel>
+              <FormLabel htmlFor="shift-type">Shift Type</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger id="shift-type">
                     <SelectValue placeholder="Select shift type" />
                   </SelectTrigger>
                 </FormControl>
