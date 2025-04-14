@@ -2,11 +2,8 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -19,14 +16,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { EmployeeSelect } from './schedule/EmployeeSelect';
+import { ShiftEntry } from './schedule/ShiftEntry';
+import { useStaffContext } from '@/contexts/StaffContext';
 
 export interface ShiftFormValues {
-  employee: string;
-  role: string;
-  day: number;
-  startTime: string;
-  endTime: string;
+  employeeId: string;
   type: 'shift' | 'time-off' | 'training';
+  shifts: Array<{
+    day: number;
+    startTime: string;
+    endTime: string;
+  }>;
 }
 
 interface ShiftFormProps {
@@ -35,107 +36,35 @@ interface ShiftFormProps {
 }
 
 export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
+  const { employees } = useStaffContext();
   const form = useForm<ShiftFormValues>({
     defaultValues: {
-      employee: '',
-      role: '',
-      day: new Date().getDay(),
-      startTime: '09:00',
-      endTime: '17:00',
+      employeeId: '',
       type: 'shift',
+      shifts: [
+        {
+          day: new Date().getDay(),
+          startTime: '09:00',
+          endTime: '17:00',
+        },
+      ],
     },
   });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="employee"
+          name="employeeId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Employee Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter employee name" {...field} />
-              </FormControl>
+              <FormLabel>Employee</FormLabel>
+              <EmployeeSelect value={field.value} onChange={field.onChange} />
               <FormMessage />
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter role" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="day"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Day</FormLabel>
-              <Select
-                onValueChange={(value) => field.onChange(parseInt(value))}
-                defaultValue={field.value.toString()}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select day" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="0">Sunday</SelectItem>
-                  <SelectItem value="1">Monday</SelectItem>
-                  <SelectItem value="2">Tuesday</SelectItem>
-                  <SelectItem value="3">Wednesday</SelectItem>
-                  <SelectItem value="4">Thursday</SelectItem>
-                  <SelectItem value="5">Friday</SelectItem>
-                  <SelectItem value="6">Saturday</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="startTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Start Time</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="endTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>End Time</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         <FormField
           control={form.control}
@@ -143,10 +72,7 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Shift Type</FormLabel>
-              <Select
-                onValueChange={(value) => field.onChange(value as 'shift' | 'time-off' | 'training')}
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select shift type" />
@@ -163,11 +89,13 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
           )}
         />
 
+        <ShiftEntry />
+
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">Add Shift</Button>
+          <Button type="submit">Add Shifts</Button>
         </div>
       </form>
     </Form>

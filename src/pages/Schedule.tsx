@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle, AlertCircle } from 'lucide-react';
@@ -14,7 +13,6 @@ const Schedule = () => {
   const [isAddShiftOpen, setIsAddShiftOpen] = useState(false);
   const { isAdmin, isManager } = useAuth();
   
-  // Determine if user has management privileges (admin or manager)
   const hasManagementPrivileges = isAdmin || isManager;
   
   const prevWeek = () => {
@@ -33,13 +31,12 @@ const Schedule = () => {
     setCurrentDate(new Date());
   };
   
-  // Format the current week range for display
   const getWeekRange = () => {
     const start = new Date(currentDate);
-    start.setDate(start.getDate() - start.getDay()); // Go to the first day of week (Sunday)
+    start.setDate(start.getDate() - start.getDay());
     
     const end = new Date(start);
-    end.setDate(end.getDate() + 6); // Go to the last day of week (Saturday)
+    end.setDate(end.getDate() + 6);
     
     const startMonth = start.toLocaleString('default', { month: 'short' });
     const endMonth = end.toLocaleString('default', { month: 'short' });
@@ -56,33 +53,37 @@ const Schedule = () => {
   };
 
   const handleAddShift = (data: ShiftFormValues) => {
-    // Format time for display
-    const formatTimeDisplay = (time: string) => {
-      const [hours, minutes] = time.split(':');
-      const hour = parseInt(hours, 10);
-      const suffix = hour >= 12 ? 'PM' : 'AM';
-      const displayHour = hour % 12 || 12;
-      return `${displayHour}:${minutes} ${suffix}`;
-    };
+    const employee = employees.find(emp => emp.id === data.employeeId);
+    if (!employee) return;
 
-    // Create a new shift with the form data
-    const newShift = {
-      ...data,
-      id: Date.now(), // Use timestamp as a unique ID
-      startTime: formatTimeDisplay(data.startTime),
-      endTime: data.type === 'time-off' ? '' : formatTimeDisplay(data.endTime),
-    };
+    data.shifts.forEach(shift => {
+      const newShift = {
+        id: Date.now() + Math.random(),
+        employee: `${employee.firstName} ${employee.lastName}`,
+        role: employee.jobPosition,
+        day: shift.day,
+        startTime: formatTimeDisplay(shift.startTime),
+        endTime: data.type === 'time-off' ? '' : formatTimeDisplay(shift.endTime),
+        type: data.type
+      };
 
-    // Send the new shift to the calendar component via props
-    document.dispatchEvent(new CustomEvent('addShift', { detail: newShift }));
+      document.dispatchEvent(new CustomEvent('addShift', { detail: newShift }));
+    });
 
-    // Close the dialog and show a success message
     setIsAddShiftOpen(false);
     
     toast({
-      title: "Shift added",
-      description: `Added ${data.employee}'s ${data.type} to the schedule.`,
+      title: "Shifts added",
+      description: `Added ${data.shifts.length} ${data.type}(s) for ${employee.firstName} ${employee.lastName}.`,
     });
+  };
+
+  const formatTimeDisplay = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours, 10);
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${suffix}`;
   };
 
   return (
