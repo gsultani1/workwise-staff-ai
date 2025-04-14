@@ -64,10 +64,15 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                       <CommandItem
                         key={employee.id}
                         value={employee.id}
-                        onSelect={() => {
-                          onChange(employee.id);
+                        onSelect={(currentValue) => {
+                          if (typeof currentValue === 'string') {
+                            onChange(currentValue);
+                          } else {
+                            onChange(employee.id);
+                          }
                           setOpen(false);
                         }}
+                        className="cursor-pointer"
                       >
                         <Check
                           className={cn(
