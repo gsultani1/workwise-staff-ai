@@ -77,6 +77,41 @@ export type Database = {
           },
         ]
       }
+      time_off_balances: {
+        Row: {
+          employee_id: string
+          id: string
+          personal_days: number
+          sick_days: number
+          updated_at: string
+          vacation_days: number
+        }
+        Insert: {
+          employee_id: string
+          id?: string
+          personal_days?: number
+          sick_days?: number
+          updated_at?: string
+          vacation_days?: number
+        }
+        Update: {
+          employee_id?: string
+          id?: string
+          personal_days?: number
+          sick_days?: number
+          updated_at?: string
+          vacation_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_off_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_off_requests: {
         Row: {
           date_submitted: string
