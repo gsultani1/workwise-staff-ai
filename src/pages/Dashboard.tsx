@@ -12,7 +12,7 @@ import { UserScheduleCard } from '@/components/dashboard/UserScheduleCard';
 
 const Dashboard = () => {
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const { isAdmin, isManager, user } = useAuth();
+  const { isAdmin, isManager, user, profile } = useAuth();
   const [dashboardStats, setDashboardStats] = useState<DashboardStatsType>({
     staffOnDuty: { value: null, total: null },
     pendingTimeOff: { value: null },
@@ -23,19 +23,20 @@ const Dashboard = () => {
   const [userSchedule, setUserSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Only managers and admins can access sensitive data
   const hasManagementPrivileges = isAdmin || isManager;
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch staff on duty count (active employees)
-        const { data: activeEmployees, error: employeesError } = await supabase
+        // Fetch total and active employees
+        const { data: employeesData, error: employeesError } = await supabase
           .from('employees')
-          .select('id')
-          .eq('status', 'Active');
+          .select('id, status');
         
         if (employeesError) throw employeesError;
+        
+        const totalEmployees = employeesData.length;
+        const activeEmployees = employeesData.filter(emp => emp.status === 'Active').length;
         
         // Fetch pending time off requests
         const { data: pendingRequests, error: requestsError } = await supabase
@@ -45,25 +46,20 @@ const Dashboard = () => {
           
         if (requestsError) throw requestsError;
         
-        // Calculate weekly hours for all staff
-        // In a real app, this would come from a shifts or schedule table
-        // Using placeholder calculation based on active employees
-        const weeklyHours = activeEmployees.length * 38; // Average 38 hours per employee
+        // Calculate weekly hours (simplified)
+        const weeklyHours = activeEmployees * 38; // Average 38 hours per active employee
         
-        // Calculate labor cost (simplified estimate)
-        // In a real app, this would be calculated from actual payroll data
-        const avgHourlyRate = 15; // Placeholder: average hourly rate
+        // Estimate labor cost (simplified)
+        const avgHourlyRate = 25; // Adjusted average hourly rate
         const laborCost = weeklyHours * avgHourlyRate;
         
-        // Get current user's scheduled hours (simplified for demo)
-        // In a real app, would query a shifts table filtered by current user
-        const userHours = 38; // Placeholder value
+        // Get current user's scheduled hours (placeholder, would typically come from shifts table)
+        const userHours = 38; // Standard work week
         
-        // Update state with fetched values
         setDashboardStats({
           staffOnDuty: { 
-            value: Math.round(activeEmployees.length * 0.8), // Assume 80% are on duty now 
-            total: activeEmployees.length
+            value: Math.round(activeEmployees * 0.8), // Assume 80% are on duty
+            total: totalEmployees
           },
           pendingTimeOff: { value: pendingRequests.length },
           weeklyHours: { value: weeklyHours },
@@ -71,8 +67,7 @@ const Dashboard = () => {
           userHours: { value: userHours }
         });
         
-        // Simulate fetching user's schedule
-        // In a real app, would come from a shifts or schedule table
+        // TODO: Implement actual user schedule fetching
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -90,22 +85,7 @@ const Dashboard = () => {
             hours: 8,
             type: 'Regular Shift'
           },
-          {
-            day: 'Friday',
-            date: friday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            startTime: '10:00 AM',
-            endTime: '6:00 PM',
-            hours: 8,
-            type: 'Regular Shift'
-          },
-          {
-            day: 'Saturday',
-            date: saturday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            startTime: '8:00 AM',
-            endTime: '4:00 PM',
-            hours: 8,
-            type: 'Weekend Shift'
-          }
+          // More schedule entries would typically come from a shifts table
         ]);
         
       } catch (error) {
@@ -120,7 +100,7 @@ const Dashboard = () => {
 
   const handleFilterChange = (filters: any) => {
     console.log('Filters changed:', filters);
-    // Here you would typically fetch filtered data
+    // Implement actual filtering logic
   };
 
   const toggleAnalytics = () => {

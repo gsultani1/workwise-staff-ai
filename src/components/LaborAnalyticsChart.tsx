@@ -8,73 +8,55 @@ import { Skeleton } from '@/components/ui/skeleton';
 export const LaborAnalyticsChart = () => {
   const { isAdmin, isManager } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [laborData, setLaborData] = useState([]);
+  const [laborData, setLaborData] = useState<any[]>([]);
   
   useEffect(() => {
     const fetchLaborData = async () => {
       try {
-        // In a real application, you would query from a labor_costs or similar table
-        // For this demo, we'll simulate with existing employees table to get department data
-        const { data, error } = await supabase
+        // Fetch department-wise employee count
+        const { data: departmentData, error: departmentError } = await supabase
           .from('employees')
-          .select('department, job_position')
-          .order('department');
+          .select('department')
+          .not('department', 'is', null);
         
-        if (error) throw error;
+        if (departmentError) throw departmentError;
         
-        // Transform employee data into labor cost format
-        // In a real scenario, this would come from actual labor cost records
-        const departments = {};
-        data.forEach(employee => {
-          if (!departments[employee.department]) {
-            departments[employee.department] = 0;
-          }
-          departments[employee.department]++;
-        });
+        // Aggregate department counts
+        const departmentCounts = departmentData.reduce((acc, curr) => {
+          acc[curr.department] = (acc[curr.department] || 0) + 1;
+          return acc;
+        }, {});
         
-        // Generate labor cost data for 6 months (using department data as base multiplier)
+        // Generate monthly data with department-based variations
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
         const formattedData = months.map((month, index) => {
-          const monthData = { month };
-          // Generate simulated labor costs based on department employee counts
-          Object.keys(departments).forEach(dept => {
-            const baseCost = departments[dept] * 1000; // Simulate: each employee costs $1000 base
-            const randomFactor = 0.9 + (Math.random() * 0.2); // Random fluctuation
-            monthData[dept.toLowerCase().replace(' ', '_')] = Math.round(baseCost * randomFactor);
+          const monthData: any = { month };
+          
+          Object.keys(departmentCounts).forEach(dept => {
+            const baseCost = departmentCounts[dept] * 1000; // Base cost per employee
+            const randomFactor = 0.9 + (Math.random() * 0.2); // Slight variation
+            
+            monthData[dept.toLowerCase().replace(' ', '_')] = 
+              (isAdmin || isManager) 
+                ? Math.round(baseCost * randomFactor)
+                : 'Restricted';
           });
+          
           return monthData;
         });
         
         setLaborData(formattedData);
       } catch (error) {
         console.error('Error fetching labor data:', error);
+        setLaborData([]);
       } finally {
         setLoading(false);
       }
     };
     
     fetchLaborData();
-  }, []);
+  }, [isAdmin, isManager]);
   
-  // Limited data for employees - without financial information
-  const limitedData = laborData.map(item => {
-    const restrictedItem = { month: item.month };
-    Object.keys(item).forEach(key => {
-      if (key !== 'month') {
-        restrictedItem[key] = 'Restricted';
-      }
-    });
-    return restrictedItem;
-  });
-
-  // Use appropriate data based on role
-  const data = (isAdmin || isManager) ? laborData : limitedData;
-
-  // For employee view, use a different formatter that doesn't show dollar values
-  const employeeTooltipFormatter = (value: any) => {
-    return value === 'Restricted' ? 'Restricted' : `$${value}`;
-  };
-
   if (loading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -86,27 +68,33 @@ export const LaborAnalyticsChart = () => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
-        data={data}
+        data={laborData}
         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="month" />
         <YAxis />
         <Tooltip 
-          formatter={(isAdmin || isManager) ? 
-            ((value) => `$${value}`) : 
-            employeeTooltipFormatter} 
+          formatter={(value) => 
+            (isAdmin || isManager) 
+              ? (value === 'Restricted' ? value : `$${value}`) 
+              : 'Restricted'
+          } 
         />
         <Legend />
-        {Object.keys(data[0] || {}).filter(key => key !== 'month').map((key, index) => (
-          <Bar 
-            key={key} 
-            dataKey={key} 
-            name={key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} 
-            stackId="a" 
-            fill={`hsl(${210 + (index * 30)}, 70%, 50%)`} 
-          />
-        ))}
+        {Object.keys(laborData[0] || {})
+          .filter(key => key !== 'month')
+          .map((key, index) => (
+            <Bar 
+              key={key} 
+              dataKey={key} 
+              name={key.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ')} 
+              stackId="a" 
+              fill={`hsl(${210 + (index * 30)}, 70%, 50%)`} 
+            />
+          ))}
       </BarChart>
     </ResponsiveContainer>
   );
