@@ -54,38 +54,28 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           <Command>
             <CommandInput placeholder="Search employee..." />
             <CommandList>
-              {employeesList.length === 0 ? (
-                <CommandEmpty>No employees available.</CommandEmpty>
-              ) : (
-                <>
-                  <CommandEmpty>No employee found.</CommandEmpty>
-                  <CommandGroup>
-                    {employeesList.filter(Boolean).map((employee) => (
-                      <CommandItem
-                        key={employee.id}
-                        value={employee.id}
-                        onSelect={(currentValue) => {
-                          if (typeof currentValue === 'string') {
-                            onChange(currentValue);
-                          } else {
-                            onChange(employee.id);
-                          }
-                          setOpen(false);
-                        }}
-                        className="cursor-pointer"
-                      >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            value === employee.id ? 'opacity-100' : 'opacity-0'
-                          )}
-                        />
-                        {employee.firstName} {employee.lastName} - {employee.jobPosition}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </>
-              )}
+              <CommandEmpty>No employee found.</CommandEmpty>
+              <CommandGroup>
+                {employeesList.filter(Boolean).map((employee) => (
+                  <CommandItem
+                    key={employee.id}
+                    value={employee.id}
+                    onSelect={(currentValue) => {
+                      onChange(currentValue);
+                      setOpen(false);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        'mr-2 h-4 w-4',
+                        value === employee.id ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    {employee.firstName} {employee.lastName} - {employee.jobPosition}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             </CommandList>
           </Command>
         )}
