@@ -66,6 +66,9 @@ export const StaffProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         description: error.message,
         variant: 'destructive',
       });
+      // Initialize with empty arrays rather than leaving as undefined
+      setEmployees([]);
+      setFilteredEmployees([]);
     } finally {
       setLoading(false);
     }

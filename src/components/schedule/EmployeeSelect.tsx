@@ -51,36 +51,38 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder="Search employee..." />
-          <CommandEmpty>No employee found.</CommandEmpty>
-          {loading ? (
-            <div className="py-6 text-center text-sm">Loading employees...</div>
-          ) : employeesList.length > 0 ? (
-            <CommandGroup>
-              {employeesList.map((employee) => (
-                <CommandItem
-                  key={employee.id}
-                  value={employee.id}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue === value ? '' : currentValue);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      'mr-2 h-4 w-4',
-                      value === employee.id ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                  {employee.firstName} {employee.lastName} - {employee.jobPosition}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          ) : (
-            <div className="py-6 text-center text-sm">No employees available.</div>
-          )}
-        </Command>
+        {loading ? (
+          <div className="py-6 text-center text-sm">Loading employees...</div>
+        ) : (
+          <Command>
+            <CommandInput placeholder="Search employee..." />
+            <CommandEmpty>No employee found.</CommandEmpty>
+            {employeesList.length > 0 ? (
+              <CommandGroup>
+                {employeesList.map((employee) => (
+                  <CommandItem
+                    key={employee.id}
+                    value={employee.id}
+                    onSelect={(currentValue) => {
+                      onChange(currentValue === value ? '' : currentValue);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        'mr-2 h-4 w-4',
+                        value === employee.id ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    {employee.firstName} {employee.lastName} - {employee.jobPosition}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : (
+              <div className="py-6 text-center text-sm">No employees available.</div>
+            )}
+          </Command>
+        )}
       </PopoverContent>
     </Popover>
   );
