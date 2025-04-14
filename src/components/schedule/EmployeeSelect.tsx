@@ -54,6 +54,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           className="w-full justify-between"
           id="employee-select"
           name="employee-select"
+          type="button"
         >
           {displayValue}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
