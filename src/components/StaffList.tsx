@@ -13,7 +13,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useStaffContext } from '@/contexts/StaffContext';
 
-export const StaffList = () => {
+interface StaffListProps {
+  readOnly?: boolean;
+}
+
+export const StaffList = ({ readOnly = false }: StaffListProps) => {
   const { filteredEmployees } = useStaffContext();
   
   const getStatusColor = (status: string = 'Active') => {
@@ -44,7 +48,9 @@ export const StaffList = () => {
               <th className="text-left py-3 px-4 font-medium text-sm">Department</th>
               <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
               <th className="text-left py-3 px-4 font-medium text-sm">Hire Date</th>
-              <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
+              {!readOnly && (
+                <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -69,25 +75,27 @@ export const StaffList = () => {
                   </Badge>
                 </td>
                 <td className="py-3 px-4 text-sm">{employee.hireDate || 'N/A'}</td>
-                <td className="py-3 px-4 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>View Profile</DropdownMenuItem>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>Schedule</DropdownMenuItem>
-                      <DropdownMenuItem>Time Off</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
+                {!readOnly && (
+                  <td className="py-3 px-4 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>View Profile</DropdownMenuItem>
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem>Schedule</DropdownMenuItem>
+                        <DropdownMenuItem>Time Off</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
