@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle, AlertCircle } from 'lucide-react';
 import { ScheduleCalendar } from '@/components/ScheduleCalendar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ShiftForm, ShiftFormValues } from '@/components/ShiftForm';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,13 +15,11 @@ const Schedule = () => {
   const { isAdmin, isManager } = useAuth();
   const { employees, fetchEmployees, loading } = useStaffContext();
   
-  // Fetch employees when the component mounts
   useEffect(() => {
     console.log('Schedule component mounted, fetching employees...');
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // Log the employees whenever they change
   useEffect(() => {
     console.log('Schedule - employees updated:', employees?.length || 0, 'loading:', loading);
   }, [employees, loading]);
@@ -158,6 +155,9 @@ const Schedule = () => {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add New Shift</DialogTitle>
+              <DialogDescription>
+                Select an employee and add shifts to their schedule.
+              </DialogDescription>
             </DialogHeader>
             {loading ? (
               <div className="py-8 text-center">Loading employee data...</div>

@@ -21,6 +21,16 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { employees, loading } = useStaffContext();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (open && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [open]);
   
   const employeesList = Array.isArray(employees) ? employees : [];
   const selectedEmployee = employeesList.find((employee) => employee?.id === value);
@@ -69,10 +79,13 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
             <div className="flex items-center border-b px-3 mb-2">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <Input
+                ref={searchInputRef}
                 placeholder="Search employee..."
                 className="h-9 px-0 border-none focus:ring-0 text-sm flex-1"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                id="employee-search"
+                aria-label="Search for an employee"
               />
             </div>
             
@@ -81,7 +94,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
               <div className="py-6 text-center text-sm">No employee found.</div>
             )}
             
-            {/* Employee list */}
+            {/* Employee list using divs with direct click handlers */}
             <div className="p-1">
               {filteredEmployees.map((employee) => (
                 <div
