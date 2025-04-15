@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,7 +47,7 @@ export const useShifts = (currentDate: Date) => {
     return `${displayHour}:${minutes} ${suffix}`;
   };
 
-  const fetchShifts = async () => {
+  const fetchShifts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -90,7 +91,7 @@ export const useShifts = (currentDate: Date) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const updateShiftDay = async (shiftId: string | number, newDay: number) => {
     try {
@@ -116,13 +117,14 @@ export const useShifts = (currentDate: Date) => {
 
   useEffect(() => {
     fetchShifts();
-  }, [currentDate]);
+  }, [currentDate, fetchShifts]);
 
   return {
     shifts,
     loading,
     error,
     updateShiftDay,
-    setShifts
+    setShifts,
+    fetchShifts
   };
 };
