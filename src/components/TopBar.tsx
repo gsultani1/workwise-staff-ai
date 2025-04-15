@@ -1,41 +1,29 @@
 
 import React from 'react';
-import { NotificationsDropdown } from './NotificationsDropdown';
+import { SearchBar } from './SearchBar';
+import { DashboardFilter } from './DashboardFilter';
 import { UserProfileDropdown } from './UserProfileDropdown';
+import { NotificationsDropdown } from './NotificationsDropdown';
+import { useLocation } from 'react-router-dom';
 
-// Sample notifications data
-const sampleNotifications = [
-  {
-    id: 1,
-    title: 'New Time Off Request',
-    message: 'Lisa Kim has requested time off on April 12th',
-    time: '10 minutes ago',
-    read: false
-  },
-  {
-    id: 2,
-    title: 'Schedule Updated',
-    message: 'Your shift on Wednesday has been modified',
-    time: '2 hours ago',
-    read: false
-  },
-  {
-    id: 3,
-    title: 'Staff Meeting',
-    message: 'Don\'t forget about the team meeting tomorrow at 9 AM',
-    time: '1 day ago',
-    read: false
-  }
-];
+interface TopBarProps {
+  extraComponent?: React.ReactNode;
+}
 
-export const TopBar: React.FC = () => {
+export const TopBar: React.FC<TopBarProps> = ({ extraComponent }) => {
+  const location = useLocation();
+  const isDashboard = location.pathname === '/';
+
   return (
-    <header className="border-b border-border bg-card px-4 py-3">
-      <div className="flex items-center justify-end">
-        <div className="flex items-center gap-2">
-          <NotificationsDropdown initialNotifications={sampleNotifications} />
-          <UserProfileDropdown />
-        </div>
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center gap-4 border-b bg-background px-4 sm:px-6">
+      <div className="flex flex-1 items-center gap-4">
+        {isDashboard && <DashboardFilter />}
+        {!isDashboard && <SearchBar />}
+      </div>
+      <div className="flex items-center gap-4">
+        {extraComponent}
+        <NotificationsDropdown />
+        <UserProfileDropdown />
       </div>
     </header>
   );

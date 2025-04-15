@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,10 +14,10 @@ import { AppLayout } from "./components/AppLayout";
 import Auth from "./pages/Auth";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { StaffProvider } from "./contexts/StaffContext";
+import { TopBarActions } from "./components/TopBarActions";
 
 const queryClient = new QueryClient();
 
-// Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   
@@ -36,7 +35,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   const { user, loading } = useAuth();
   
-  // Show loading state while auth state is being determined
   if (loading) {
     return <div className="flex h-screen w-full items-center justify-center">Loading...</div>;
   }
@@ -44,12 +42,12 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
-      <Route path="/" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
-      <Route path="/schedule" element={<ProtectedRoute><AppLayout><Schedule /></AppLayout></ProtectedRoute>} />
-      <Route path="/time-off" element={<ProtectedRoute><AppLayout><TimeOff /></AppLayout></ProtectedRoute>} />
-      <Route path="/analytics" element={<ProtectedRoute><AppLayout><Analytics /></AppLayout></ProtectedRoute>} />
-      <Route path="/staff" element={<ProtectedRoute><AppLayout><Staff /></AppLayout></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><AppLayout extraHeaderComponent={<TopBarActions />}><Dashboard /></AppLayout></ProtectedRoute>} />
+      <Route path="/schedule" element={<ProtectedRoute><AppLayout extraHeaderComponent={<TopBarActions />}><Schedule /></AppLayout></ProtectedRoute>} />
+      <Route path="/time-off" element={<ProtectedRoute><AppLayout extraHeaderComponent={<TopBarActions />}><TimeOff /></AppLayout></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute><AppLayout extraHeaderComponent={<TopBarActions />}><Analytics /></AppLayout></ProtectedRoute>} />
+      <Route path="/staff" element={<ProtectedRoute><AppLayout extraHeaderComponent={<TopBarActions />}><Staff /></AppLayout></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><AppLayout extraHeaderComponent={<TopBarActions />}><Settings /></AppLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

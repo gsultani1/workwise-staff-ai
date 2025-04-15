@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send } from 'lucide-react';
+import { Send, CheckCheck, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -31,14 +31,14 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
   const [newMessage, setNewMessage] = useState('');
   const { profile } = useAuth();
   const [sending, setSending] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen || !profile?.employee_id || !recipientId) return;
 
     const fetchMessages = async () => {
       try {
-        console.log('Fetching messages between', profile.employee_id, 'and', recipientId);
-        
         const { data, error } = await supabase
           .from('messages')
           .select('*')
@@ -50,8 +50,24 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
           return;
         }
 
-        console.log('Messages fetched:', data);
         setMessages(data || []);
+        
+        // Mark received messages as read
+        if (data && data.length > 0) {
+          const unreadMessages = data.filter(msg => 
+            msg.recipient_id === profile.employee_id && 
+            msg.sender_id === recipientId && 
+            msg.read_at === null
+          );
+          
+          if (unreadMessages.length > 0) {
+            // Update read status for all unread messages from this sender
+            await supabase
+              .from('messages')
+              .update({ read_at: new Date().toISOString() })
+              .in('id', unreadMessages.map(msg => msg.id));
+          }
+        }
       } catch (err) {
         console.error('Exception fetching messages:', err);
       }
@@ -71,8 +87,16 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
           filter: `or(and(sender_id=eq.${profile.employee_id},recipient_id=eq.${recipientId}),and(sender_id=eq.${recipientId},recipient_id=eq.${profile.employee_id}))`
         },
         (payload) => {
-          console.log('New message received:', payload);
-          setMessages(current => [...current, payload.new as Message]);
+          const newMsg = payload.new as Message;
+          setMessages(current => [...current, newMsg]);
+          
+          // If the message is from the other person, mark it as read
+          if (newMsg.sender_id === recipientId && newMsg.recipient_id === profile.employee_id) {
+            supabase
+              .from('messages')
+              .update({ read_at: new Date().toISOString() })
+              .eq('id', newMsg.id);
+          }
         }
       )
       .subscribe();
@@ -82,13 +106,18 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
     };
   }, [isOpen, profile?.employee_id, recipientId]);
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !profile?.employee_id) return;
 
     setSending(true);
     try {
-      console.log('Sending message from', profile.employee_id, 'to', recipientId);
-      
       const { error } = await supabase.from('messages').insert({
         content: newMessage.trim(),
         sender_id: profile.employee_id,
@@ -98,10 +127,6 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
       if (error) throw error;
 
       setNewMessage('');
-      toast({
-        title: "Message sent",
-        description: "Your message has been sent successfully.",
-      });
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -121,32 +146,49 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
           <DialogTitle>Chat with {recipientName}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col h-[400px]">
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
             <div className="space-y-4">
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground">
                   No messages yet. Start the conversation!
                 </div>
               ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.sender_id === profile?.employee_id ? 'justify-end' : 'justify-start'}`}
-                  >
+                messages.map((message, index) => {
+                  const isLastMessage = index === messages.length - 1;
+                  const isSender = message.sender_id === profile?.employee_id;
+                  
+                  return (
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.sender_id === profile?.employee_id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
+                      key={message.id}
+                      ref={isLastMessage ? lastMessageRef : null}
+                      className={`flex ${isSender ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="text-sm">{message.content}</p>
-                      <span className="text-xs opacity-70">
-                        {format(new Date(message.created_at), 'HH:mm')}
-                      </span>
+                      <div
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          isSender
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                          <span className="text-xs opacity-70">
+                            {format(new Date(message.created_at), 'HH:mm')}
+                          </span>
+                          {isSender && (
+                            <span className="text-xs">
+                              {message.read_at ? (
+                                <CheckCheck className="h-3 w-3 inline" />
+                              ) : (
+                                <Check className="h-3 w-3 inline" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </ScrollArea>
