@@ -1,8 +1,8 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { formatTimeDisplay } from '@/utils/timeFormatter';
+import { useShiftOperations } from './useShiftOperations';
 
 export interface Shift {
   id: number | string;
@@ -32,31 +32,8 @@ interface DbShift {
 }
 
 export const useShifts = (currentDate: Date) => {
-  const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { user } = useAuth();
-
-  const formatTimeDisplay = (time: string) => {
-    if (!time) return '';
-    
-    try {
-      const timeParts = time.split(':');
-      const hours = parseInt(timeParts[0], 10);
-      const minutes = timeParts[1];
-      
-      if (isNaN(hours)) {
-        return '';
-      }
-      
-      const suffix = hours >= 12 ? 'PM' : 'AM';
-      const displayHour = hours % 12 || 12;
-      return `${displayHour}:${minutes} ${suffix}`;
-    } catch (err) {
-      console.error('Error formatting time:', err, time);
-      return '';
-    }
-  };
 
   const fetchShifts = useCallback(async () => {
     try {
@@ -104,95 +81,9 @@ export const useShifts = (currentDate: Date) => {
     }
   }, []);
 
-  const updateShiftDay = async (shiftId: string | number, newDay: number) => {
-    try {
-      // Update the UI optimistically
-      setShifts(prevShifts => 
-        prevShifts.map(shift => 
-          shift.id.toString() === shiftId.toString() 
-            ? { ...shift, day: newDay }
-            : shift
-        )
-      );
+  const { shifts, setShifts, updateShiftDay, deleteShift } = useShiftOperations(fetchShifts);
 
-      // Then update the database
-      const { error: updateError } = await supabase
-        .from('shifts')
-        .update({ day: newDay })
-        .eq('id', shiftId.toString());
-
-      if (updateError) {
-        throw updateError;
-      }
-      
-      // Record the shift change in history if user is authenticated
-      if (user) {
-        const { error: historyError } = await supabase
-          .from('shift_history')
-          .insert({
-            shift_id: shiftId.toString(),
-            modified_by: user.id,
-            action: 'day_changed',
-            changes: { new_day: newDay }
-          });
-          
-        if (historyError) {
-          console.error('Error recording shift history:', historyError);
-          // Don't throw here - we don't want to fail the whole operation
-          // just because history recording failed
-        }
-      }
-    } catch (err) {
-      const error = err as Error;
-      console.error('Error in updateShiftDay:', error);
-      
-      // Rollback optimistic update if there was an error
-      fetchShifts();
-      
-      toast({
-        title: "Error",
-        description: "Failed to update shift. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteShift = async (shiftId: string | number) => {
-    try {
-      // Update UI optimistically
-      setShifts(prevShifts => 
-        prevShifts.filter(shift => shift.id.toString() !== shiftId.toString())
-      );
-      
-      // Delete from database
-      const { error: deleteError } = await supabase
-        .from('shifts')
-        .delete()
-        .eq('id', shiftId.toString());
-        
-      if (deleteError) {
-        throw deleteError;
-      }
-      
-      toast({
-        title: "Success",
-        description: "Shift has been deleted.",
-      });
-    } catch (err) {
-      const error = err as Error;
-      console.error('Error in deleteShift:', error);
-      
-      // Rollback optimistic update
-      fetchShifts();
-      
-      toast({
-        title: "Error",
-        description: "Failed to delete shift. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
+  // Fetch shifts when currentDate changes
   useEffect(() => {
     fetchShifts();
   }, [currentDate, fetchShifts]);
