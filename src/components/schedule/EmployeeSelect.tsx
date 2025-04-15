@@ -105,7 +105,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" style={{ zIndex: 9999 }}>
+      <PopoverContent className="w-full p-0">
         <div className="max-h-[300px] overflow-y-auto">
           <div className="flex items-center border-b px-3 py-2 bg-background">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
