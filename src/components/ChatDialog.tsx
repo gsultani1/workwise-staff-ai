@@ -116,7 +116,7 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] z-50">
         <DialogHeader>
           <DialogTitle>Chat with {recipientName}</DialogTitle>
         </DialogHeader>
