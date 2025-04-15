@@ -79,7 +79,7 @@ export const useTimeOffSubmission = () => {
       const { error } = await supabase
         .from('time_off_requests')
         .insert({
-          user_id: user.id,
+          // Remove user_id from the insert
           employee_id: employeeData.id,
           type: requestType.charAt(0).toUpperCase() + requestType.slice(1),
           start_date: startDate.toISOString().split('T')[0],

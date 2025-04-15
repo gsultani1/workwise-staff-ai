@@ -10,11 +10,11 @@ export type Employee = {
   hireDate?: string;
 };
 
-// Add TimeOffRequest type here for better organization
+// Update TimeOffRequest type to make user_id optional since it's no longer in the database
 export type TimeOffRequest = {
   id: string;
   employee_id: string;
-  user_id: string;
+  user_id?: string; // Make user_id optional
   type: string;
   start_date: string;
   end_date: string;
@@ -39,7 +39,7 @@ export type TimeOffHistory = {
   reason?: string | null;
   date_submitted?: string;
   updated_at?: string;
-  user_id?: string;
+  user_id?: string; // Make user_id optional here as well
 };
 
 // Add UserProfile type for better organization
