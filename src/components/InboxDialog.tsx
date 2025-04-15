@@ -37,7 +37,7 @@ export const InboxDialog = ({ isOpen, onClose }: InboxDialogProps) => {
     const fetchConversations = async () => {
       setLoading(true);
       try {
-        // Custom query to get latest message from each conversation partner
+        // Use the get_conversations function that we've created in the SQL migration
         const { data, error } = await supabase
           .from('messages')
           .select(`
@@ -46,8 +46,8 @@ export const InboxDialog = ({ isOpen, onClose }: InboxDialogProps) => {
             content,
             created_at,
             read_at,
-            sender:sender_id(first_name, last_name),
-            recipient:recipient_id(first_name, last_name)
+            sender:employees!sender_id(first_name, last_name),
+            recipient:employees!recipient_id(first_name, last_name)
           `)
           .or(`sender_id.eq.${profile.employee_id},recipient_id.eq.${profile.employee_id}`)
           .order('created_at', { ascending: false });
