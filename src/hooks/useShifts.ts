@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -34,6 +33,7 @@ interface DbShift {
 export const useShifts = (currentDate: Date) => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const { user } = useAuth();
 
   const formatTimeDisplay = (time: string) => {
@@ -49,7 +49,9 @@ export const useShifts = (currentDate: Date) => {
   const fetchShifts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      setError(null);
+      
+      const { data, error: fetchError } = await supabase
         .from('shifts')
         .select(`
           *,
@@ -61,9 +63,8 @@ export const useShifts = (currentDate: Date) => {
         `)
         .order('day');
 
-      if (error) {
-        console.error('Error fetching shifts:', error);
-        throw error;
+      if (fetchError) {
+        throw fetchError;
       }
 
       const formattedShifts: Shift[] = (data as DbShift[]).map(dbShift => ({
@@ -77,8 +78,10 @@ export const useShifts = (currentDate: Date) => {
       }));
 
       setShifts(formattedShifts);
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error in fetchShifts:', error);
+      setError(error);
       toast({
         title: "Error",
         description: "Failed to load shifts. Please try again.",
@@ -91,22 +94,23 @@ export const useShifts = (currentDate: Date) => {
 
   const updateShiftDay = async (shiftId: string | number, newDay: number) => {
     try {
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('shifts')
         .update({ day: newDay })
-        .eq('id', shiftId);
+        .eq('id', shiftId.toString());
 
-      if (error) {
-        console.error('Error updating shift:', error);
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error in updateShiftDay:', error);
       toast({
         title: "Error",
         description: "Failed to update shift. Please try again.",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -117,6 +121,7 @@ export const useShifts = (currentDate: Date) => {
   return {
     shifts,
     loading,
+    error,
     updateShiftDay,
     setShifts
   };
