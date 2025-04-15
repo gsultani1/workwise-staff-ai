@@ -20,7 +20,7 @@ export const ShiftEntry = () => {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
       {fields.map((field, index) => (
         <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative">
           <Button
