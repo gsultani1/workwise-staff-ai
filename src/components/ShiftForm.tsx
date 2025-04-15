@@ -20,6 +20,8 @@ import {
 import { EmployeeSelect } from './schedule/EmployeeSelect';
 import { ShiftEntry } from './schedule/ShiftEntry';
 import { useStaffContext } from '@/contexts/StaffContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface ShiftFormValues {
   employeeId: string;
@@ -38,6 +40,7 @@ interface ShiftFormProps {
 
 export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
   const { loading, employees } = useStaffContext();
+  const { user } = useAuth();
   const form = useForm<ShiftFormValues>({
     defaultValues: {
       employeeId: '',
@@ -62,9 +65,51 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ onSubmit, onCancel }) => {
     return <div className="py-4 text-center">No employees available. Please add employees first.</div>;
   }
 
+  // Submit handler that will save to database
+  const handleFormSubmit = async (data: ShiftFormValues) => {
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    try {
+      // For each shift in the form, insert into database
+      const savedShifts = await Promise.all(
+        data.shifts.map(async (shift) => {
+          const { data: savedShift, error } = await supabase
+            .from('shifts')
+            .insert({
+              employee_id: data.employeeId,
+              created_by: user.id,
+              type: data.type,
+              day: shift.day,
+              start_time: shift.startTime,
+              end_time: data.type === 'time-off' ? null : shift.endTime
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error saving shift:', error);
+            throw error;
+          }
+
+          return savedShift;
+        })
+      );
+
+      console.log('Shifts saved successfully:', savedShifts);
+      
+      // Call the onSubmit callback with the form data
+      onSubmit(data);
+    } catch (error) {
+      console.error('Error saving shifts:', error);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="employeeId"

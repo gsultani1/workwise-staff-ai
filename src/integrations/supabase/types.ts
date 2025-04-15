@@ -77,6 +77,85 @@ export type Database = {
           },
         ]
       }
+      shift_history: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          id: string
+          modified_by: string
+          shift_id: string
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          modified_by: string
+          shift_id: string
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          modified_by?: string
+          shift_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_history_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          created_at: string
+          created_by: string
+          day: number
+          employee_id: string
+          end_time: string | null
+          id: string
+          start_time: string
+          type: Database["public"]["Enums"]["shift_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          day: number
+          employee_id: string
+          end_time?: string | null
+          id?: string
+          start_time: string
+          type?: Database["public"]["Enums"]["shift_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          day?: number
+          employee_id?: string
+          end_time?: string | null
+          id?: string
+          start_time?: string
+          type?: Database["public"]["Enums"]["shift_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_off_balances: {
         Row: {
           employee_id: string
@@ -231,6 +310,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "employee"
+      shift_type: "shift" | "time-off" | "training"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -347,6 +427,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "employee"],
+      shift_type: ["shift", "time-off", "training"],
     },
   },
 } as const

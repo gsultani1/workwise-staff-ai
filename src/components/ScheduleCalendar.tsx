@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ScheduleCalendarProps {
   currentDate: Date;
@@ -9,7 +11,7 @@ interface ScheduleCalendarProps {
 }
 
 interface Shift {
-  id: number;
+  id: number | string;
   employee: string;
   role: string;
   day: number;
@@ -18,7 +20,28 @@ interface Shift {
   type: 'shift' | 'time-off' | 'training';
 }
 
+interface DbShift {
+  id: string;
+  employee_id: string;
+  created_by: string;
+  type: 'shift' | 'time-off' | 'training';
+  day: number;
+  start_time: string;
+  end_time: string | null;
+  created_at: string;
+  updated_at: string;
+  employees: {
+    first_name: string;
+    last_name: string;
+    job_position: string;
+  };
+}
+
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate, readOnly = false }) => {
+  const { user } = useAuth();
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   // Generate days for the week starting with the first day of the week (Sunday)
   const getDaysInWeek = () => {
     const days = [];
@@ -42,70 +65,79 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate,
   };
   
   const days = getDaysInWeek();
-  
-  // Mock shift data as state to allow modifications
-  const [shifts, setShifts] = useState<Shift[]>([
-    {
-      id: 1,
-      employee: 'Sarah Johnson',
-      role: 'Cashier',
-      day: new Date().getDay(), // Today
-      startTime: '9:00 AM',
-      endTime: '5:00 PM',
-      type: 'shift'
-    },
-    {
-      id: 2,
-      employee: 'Michael Chen',
-      role: 'Sales Associate',
-      day: new Date().getDay(), // Today
-      startTime: '10:00 AM',
-      endTime: '6:00 PM',
-      type: 'shift'
-    },
-    {
-      id: 3,
-      employee: 'James Wilson',
-      role: 'Manager',
-      day: new Date().getDay(), // Today
-      startTime: '8:00 AM',
-      endTime: '4:00 PM',
-      type: 'shift'
-    },
-    {
-      id: 4,
-      employee: 'Emily Rodriguez',
-      role: 'Customer Service',
-      day: (new Date().getDay() + 1) % 7, // Tomorrow
-      startTime: '9:00 AM',
-      endTime: '5:00 PM',
-      type: 'shift'
-    },
-    {
-      id: 5,
-      employee: 'Robert Davis',
-      role: 'Time Off',
-      day: (new Date().getDay() + 2) % 7, // Day after tomorrow
-      startTime: 'All Day',
-      endTime: '',
-      type: 'time-off'
-    },
-    {
-      id: 6,
-      employee: 'Lisa Kim',
-      role: 'Training',
-      day: (new Date().getDay() + 3) % 7,
-      startTime: '1:00 PM',
-      endTime: '5:00 PM',
-      type: 'training'
+
+  // Fetch shifts from database
+  const fetchShifts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('shifts')
+        .select(`
+          *,
+          employees:employee_id (
+            first_name,
+            last_name,
+            job_position
+          )
+        `)
+        .order('day');
+
+      if (error) {
+        console.error('Error fetching shifts:', error);
+        throw error;
+      }
+
+      // Convert the database shifts to our app format
+      const formattedShifts: Shift[] = (data as DbShift[]).map(dbShift => ({
+        id: dbShift.id,
+        employee: `${dbShift.employees.first_name} ${dbShift.employees.last_name}`,
+        role: dbShift.employees.job_position,
+        day: dbShift.day,
+        startTime: formatTimeDisplay(dbShift.start_time),
+        endTime: dbShift.end_time ? formatTimeDisplay(dbShift.end_time) : '',
+        type: dbShift.type
+      }));
+
+      setShifts(formattedShifts);
+    } catch (error) {
+      console.error('Error in fetchShifts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load shifts. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  // Load shifts when component mounts or when currentDate changes
+  useEffect(() => {
+    fetchShifts();
+  }, [currentDate]);
+
+  // Function to format time for display
+  const formatTimeDisplay = (time: string) => {
+    if (!time) return '';
+    
+    // Handle both formats: '09:00' and '09:00:00'
+    const timeParts = time.split(':');
+    const hours = parseInt(timeParts[0], 10);
+    const minutes = timeParts[1];
+    
+    const suffix = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = hours % 12 || 12;
+    
+    return `${displayHour}:${minutes} ${suffix}`;
+  };
   
   // Listen for new shifts from the Schedule component
   useEffect(() => {
     const handleAddShift = (event: Event) => {
       const customEvent = event as CustomEvent<Shift>;
       setShifts(prevShifts => [...prevShifts, customEvent.detail]);
+      // Refetch shifts to ensure we have the latest data
+      fetchShifts();
     };
 
     document.addEventListener('addShift', handleAddShift);
@@ -119,8 +151,30 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate,
     return shifts.filter(shift => shift.day === dayIndex);
   };
 
+  // Update shift in database when dragged
+  const updateShiftDay = async (shiftId: number | string, newDay: number) => {
+    try {
+      const { error } = await supabase
+        .from('shifts')
+        .update({ day: newDay })
+        .eq('id', shiftId);
+
+      if (error) {
+        console.error('Error updating shift:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error in updateShiftDay:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update shift. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent, shiftId: number) => {
+  const handleDragStart = (e: React.DragEvent, shiftId: number | string) => {
     if (readOnly) return; // Prevent drag if readonly
     e.dataTransfer.setData('shiftId', shiftId.toString());
   };
@@ -134,16 +188,19 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate,
     if (readOnly) return; // Prevent drop if readonly
     
     e.preventDefault();
-    const shiftId = parseInt(e.dataTransfer.getData('shiftId'));
+    const shiftId = e.dataTransfer.getData('shiftId');
     
-    // Update the shift day
+    // Update the shift day in state
     setShifts(prevShifts => 
       prevShifts.map(shift => 
-        shift.id === shiftId 
+        shift.id.toString() === shiftId 
           ? { ...shift, day: targetDayIndex }
           : shift
       )
     );
+
+    // Update in database
+    updateShiftDay(shiftId, targetDayIndex);
 
     // Show success notification
     toast({
@@ -151,6 +208,14 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ currentDate,
       description: "The shift has been successfully rescheduled.",
     });
   };
+
+  if (loading && shifts.length === 0) {
+    return (
+      <div className="bg-card rounded-lg border border-border p-8 text-center">
+        <div className="animate-pulse">Loading shifts...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden">

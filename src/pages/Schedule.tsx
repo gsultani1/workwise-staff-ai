@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle, AlertCircle } from 'lucide-react';
@@ -12,7 +13,7 @@ import { useStaffContext } from '@/contexts/StaffContext';
 const Schedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddShiftOpen, setIsAddShiftOpen] = useState(false);
-  const { isAdmin, isManager } = useAuth();
+  const { isAdmin, isManager, user } = useAuth();
   const { employees, fetchEmployees, loading } = useStaffContext();
   
   useEffect(() => {
@@ -75,6 +76,8 @@ const Schedule = () => {
       return;
     }
 
+    // Notify the calendar component about the new shifts
+    // This is mostly for UI feedback before the next fetch
     data.shifts.forEach(shift => {
       const newShift = {
         id: Date.now() + Math.random(),
