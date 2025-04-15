@@ -7,14 +7,18 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from '@/components/ui/button';
+import { ChatDialog } from '@/components/ChatDialog';
 
 export const UpcomingShifts = () => {
   const [expandedShifts, setExpandedShifts] = useState<number[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; name: string } | null>(null);
 
   const shifts = [
     { 
       id: 1, 
       employee: 'Sarah Johnson', 
+      employee_id: '6b208a99-bfd5-4aeb-980e-1e97d9cb6a57',
       role: 'Cashier', 
       date: 'Today', 
       time: '9:00 AM - 5:00 PM',
@@ -26,6 +30,7 @@ export const UpcomingShifts = () => {
     { 
       id: 2, 
       employee: 'Michael Chen', 
+      employee_id: '77813c07-4924-45f1-b9cc-07a14739e1e4',
       role: 'Sales Associate', 
       date: 'Today', 
       time: '10:00 AM - 6:00 PM',
@@ -37,6 +42,7 @@ export const UpcomingShifts = () => {
     { 
       id: 3, 
       employee: 'James Wilson', 
+      employee_id: '4d1fb8aa-570e-42f1-939b-3b0864de92cf',
       role: 'Manager', 
       date: 'Today', 
       time: '8:00 AM - 4:00 PM',
@@ -48,6 +54,7 @@ export const UpcomingShifts = () => {
     { 
       id: 4, 
       employee: 'Emily Rodriguez', 
+      employee_id: '6584efbe-f02d-4685-9d03-c9354a65fbad',
       role: 'Customer Service', 
       date: 'Tomorrow', 
       time: '9:00 AM - 5:00 PM',
@@ -59,6 +66,7 @@ export const UpcomingShifts = () => {
     { 
       id: 5, 
       employee: 'Robert Davis', 
+      employee_id: '18ddec2c-f022-429c-bfc4-dadeacdfdc0a',
       role: 'Inventory', 
       date: 'Tomorrow', 
       time: '7:00 AM - 3:00 PM',
@@ -75,6 +83,11 @@ export const UpcomingShifts = () => {
         ? prev.filter(shiftId => shiftId !== id)
         : [...prev, id]
     );
+  };
+
+  const openChat = (employeeId: string, employeeName: string) => {
+    setSelectedEmployee({ id: employeeId, name: employeeName });
+    setChatOpen(true);
   };
 
   return (
@@ -136,7 +149,13 @@ export const UpcomingShifts = () => {
                 </div>
               )}
               <div className="mt-3 flex gap-2">
-                <Button size="sm" variant="outline">Message</Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => openChat(shift.employee_id, shift.employee)}
+                >
+                  Message
+                </Button>
                 {shift.status !== 'Checked In' && (
                   <Button size="sm" variant="default">Check In</Button>
                 )}
@@ -145,6 +164,15 @@ export const UpcomingShifts = () => {
           </CollapsibleContent>
         </Collapsible>
       ))}
+      
+      {selectedEmployee && (
+        <ChatDialog
+          isOpen={chatOpen}
+          onClose={() => setChatOpen(false)}
+          recipientId={selectedEmployee.id}
+          recipientName={selectedEmployee.name}
+        />
+      )}
     </div>
   );
 };
