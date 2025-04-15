@@ -105,7 +105,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" style={{ zIndex: 999 }}>
+      <PopoverContent className="w-full p-0" style={{ zIndex: 9999 }}>
         <div className="max-h-[300px] overflow-y-auto">
           <div className="flex items-center border-b px-3 py-2 bg-background">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -145,27 +145,21 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                   });
                   
                   return (
-                    <div
+                    <button
                       key={employee.id}
+                      type="button"
                       className={cn(
                         "w-full text-left relative flex cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none",
                         "hover:bg-accent hover:text-accent-foreground",
                         isSelected && "bg-accent text-accent-foreground"
                       )}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
                         console.log('[EmployeeSelect] Employee item clicked:', employee.id);
                         handleEmployeeSelect(employee.id);
                       }}
-                      onKeyDown={(e) => {
-                        console.log('[EmployeeSelect] Key pressed on employee:', e.key);
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleEmployeeSelect(employee.id);
-                        }
-                      }}
                       role="option"
                       aria-selected={isSelected}
-                      tabIndex={0}
                     >
                       <div className="flex items-center w-full">
                         <Check
@@ -179,7 +173,7 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
                           <div className="text-xs text-muted-foreground">{employee.jobPosition}</div>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
