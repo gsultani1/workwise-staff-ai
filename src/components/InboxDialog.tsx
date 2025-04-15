@@ -38,16 +38,67 @@ export const InboxDialog = ({ isOpen, onClose }: InboxDialogProps) => {
       setLoading(true);
       try {
         // Custom query to get latest message from each conversation partner
-        const { data, error } = await supabase.rpc('get_conversations', {
-          user_id: profile.employee_id
-        });
+        const { data, error } = await supabase
+          .from('messages')
+          .select(`
+            sender_id,
+            recipient_id,
+            content,
+            created_at,
+            read_at,
+            sender:sender_id(first_name, last_name),
+            recipient:recipient_id(first_name, last_name)
+          `)
+          .or(`sender_id.eq.${profile.employee_id},recipient_id.eq.${profile.employee_id}`)
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching conversations:', error);
           return;
         }
 
-        setConversations(data || []);
+        // Process data to get unique conversations with latest message
+        const conversationsMap = new Map<string, Conversation>();
+        
+        data?.forEach(message => {
+          const isIncoming = message.recipient_id === profile.employee_id;
+          const contactId = isIncoming ? message.sender_id : message.recipient_id;
+          
+          // Skip if it's a message to self
+          if (message.sender_id === message.recipient_id) return;
+          
+          const contact = isIncoming ? message.sender : message.recipient;
+          if (!contact) return;
+          
+          const unreadCount = isIncoming && !message.read_at ? 1 : 0;
+          
+          if (!conversationsMap.has(contactId)) {
+            conversationsMap.set(contactId, {
+              employee_id: contactId,
+              first_name: contact.first_name,
+              last_name: contact.last_name,
+              latest_message: message.content,
+              latest_timestamp: message.created_at,
+              unread_count: unreadCount
+            });
+          } else {
+            const existing = conversationsMap.get(contactId)!;
+            const messageDate = new Date(message.created_at);
+            const existingDate = new Date(existing.latest_timestamp);
+            
+            // Only update if this message is newer than what we have
+            if (messageDate > existingDate) {
+              existing.latest_message = message.content;
+              existing.latest_timestamp = message.created_at;
+            }
+            
+            if (isIncoming && !message.read_at) {
+              existing.unread_count += 1;
+            }
+          }
+        });
+        
+        setConversations(Array.from(conversationsMap.values()));
       } catch (err) {
         console.error('Exception fetching conversations:', err);
       } finally {
