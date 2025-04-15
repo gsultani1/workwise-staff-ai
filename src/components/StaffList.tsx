@@ -1,8 +1,7 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, MessageSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useStaffContext } from '@/contexts/StaffContext';
+import { ChatDialog } from './ChatDialog';
 
 interface StaffListProps {
   readOnly?: boolean;
@@ -19,6 +19,7 @@ interface StaffListProps {
 
 export const StaffList = ({ readOnly = false }: StaffListProps) => {
   const { filteredEmployees } = useStaffContext();
+  const [chatWith, setChatWith] = useState<{ id: string; name: string } | null>(null);
   
   const getStatusColor = (status: string = 'Active') => {
     switch (status) {
@@ -77,29 +78,50 @@ export const StaffList = ({ readOnly = false }: StaffListProps) => {
                 <td className="py-3 px-4 text-sm">{employee.hireDate || 'N/A'}</td>
                 {!readOnly && (
                   <td className="py-3 px-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Schedule</DropdownMenuItem>
-                        <DropdownMenuItem>Time Off</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setChatWith({
+                          id: employee.id,
+                          name: `${employee.firstName} ${employee.lastName}`
+                        })}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>View Profile</DropdownMenuItem>
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem>Schedule</DropdownMenuItem>
+                          <DropdownMenuItem>Time Off</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </td>
                 )}
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+
+      {chatWith && (
+        <ChatDialog
+          isOpen={true}
+          onClose={() => setChatWith(null)}
+          recipientId={chatWith.id}
+          recipientName={chatWith.name}
+        />
       )}
     </div>
   );
