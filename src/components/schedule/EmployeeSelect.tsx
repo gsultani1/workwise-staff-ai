@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,7 +39,6 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
     }
   }, [open]);
   
-  // Monitor context data changes
   useEffect(() => {
     console.log('[EmployeeSelect] Context data updated:', {
       employeesCount: employees?.length || 0,
@@ -105,82 +103,84 @@ export const EmployeeSelect = ({ value, onChange }: EmployeeSelectProps) => {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <div className="max-h-[300px] overflow-y-auto">
-          <div className="flex items-center border-b px-3 py-2 bg-background">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <Input
-              ref={searchInputRef}
-              placeholder="Search employee..."
-              className="h-9 px-0 border-none bg-transparent focus-visible:ring-0 focus:ring-0 text-sm flex-1"
-              value={searchQuery}
-              onChange={(e) => {
-                console.log('[EmployeeSelect] Search input changed:', e.target.value);
-                setSearchQuery(e.target.value);
-              }}
-              id="employee-search"
-              aria-label="Search for an employee"
-            />
-          </div>
-          
-          {loading ? (
-            <div className="py-6 text-center text-sm">
-              Loading employees...
+      <div className="relative">
+        <PopoverContent className="w-full p-0 absolute top-0 left-0" forceMount>
+          <div className="max-h-[300px] overflow-y-auto">
+            <div className="flex items-center border-b px-3 py-2 bg-background">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <Input
+                ref={searchInputRef}
+                placeholder="Search employee..."
+                className="h-9 px-0 border-none bg-transparent focus-visible:ring-0 focus:ring-0 text-sm flex-1"
+                value={searchQuery}
+                onChange={(e) => {
+                  console.log('[EmployeeSelect] Search input changed:', e.target.value);
+                  setSearchQuery(e.target.value);
+                }}
+                id="employee-search"
+                aria-label="Search for an employee"
+              />
             </div>
-          ) : (
-            <>
-              {filteredEmployees.length === 0 && (
-                <div className="py-6 text-center text-sm">
-                  No employee found.
-                </div>
-              )}
-              
-              <div className="p-2">
-                {filteredEmployees.map((employee) => {
-                  const isSelected = value === employee.id;
-                  console.log('[EmployeeSelect] Rendering employee:', {
-                    id: employee.id,
-                    name: `${employee.firstName} ${employee.lastName}`,
-                    isSelected
-                  });
-                  
-                  return (
-                    <button
-                      key={employee.id}
-                      type="button"
-                      className={cn(
-                        "w-full text-left relative flex cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none",
-                        "hover:bg-accent hover:text-accent-foreground",
-                        isSelected && "bg-accent text-accent-foreground"
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent event bubbling
-                        console.log('[EmployeeSelect] Employee item clicked:', employee.id);
-                        handleEmployeeSelect(employee.id);
-                      }}
-                      role="option"
-                      aria-selected={isSelected}
-                    >
-                      <div className="flex items-center w-full">
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            isSelected ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        <div>
-                          <div className="font-medium">{employee.firstName} {employee.lastName}</div>
-                          <div className="text-xs text-muted-foreground">{employee.jobPosition}</div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+            
+            {loading ? (
+              <div className="py-6 text-center text-sm">
+                Loading employees...
               </div>
-            </>
-          )}
-        </div>
-      </PopoverContent>
+            ) : (
+              <>
+                {filteredEmployees.length === 0 && (
+                  <div className="py-6 text-center text-sm">
+                    No employee found.
+                  </div>
+                )}
+                
+                <div className="p-2">
+                  {filteredEmployees.map((employee) => {
+                    const isSelected = value === employee.id;
+                    console.log('[EmployeeSelect] Rendering employee:', {
+                      id: employee.id,
+                      name: `${employee.firstName} ${employee.lastName}`,
+                      isSelected
+                    });
+                    
+                    return (
+                      <button
+                        key={employee.id}
+                        type="button"
+                        className={cn(
+                          "w-full text-left relative flex cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          isSelected && "bg-accent text-accent-foreground"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          console.log('[EmployeeSelect] Employee item clicked:', employee.id);
+                          handleEmployeeSelect(employee.id);
+                        }}
+                        role="option"
+                        aria-selected={isSelected}
+                      >
+                        <div className="flex items-center w-full">
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div>
+                            <div className="font-medium">{employee.firstName} {employee.lastName}</div>
+                            <div className="text-xs text-muted-foreground">{employee.jobPosition}</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </PopoverContent>
+      </div>
     </Popover>
   );
 };
