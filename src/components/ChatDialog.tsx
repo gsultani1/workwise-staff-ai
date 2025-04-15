@@ -15,6 +15,7 @@ interface Message {
   content: string;
   created_at: string;
   sender_id: string;
+  recipient_id: string;
   read_at: string | null;
 }
 
@@ -32,37 +33,45 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !profile?.employee_id) return;
+    if (!isOpen || !profile?.employee_id || !recipientId) return;
 
     const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${profile.employee_id},recipient_id.eq.${profile.employee_id}`)
-        .order('created_at', { ascending: true });
+      try {
+        console.log('Fetching messages between', profile.employee_id, 'and', recipientId);
+        
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`and(sender_id.eq.${profile.employee_id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${profile.employee_id})`)
+          .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
+        if (error) {
+          console.error('Error fetching messages:', error);
+          return;
+        }
+
+        console.log('Messages fetched:', data);
+        setMessages(data || []);
+      } catch (err) {
+        console.error('Exception fetching messages:', err);
       }
-
-      setMessages(data || []);
     };
 
     fetchMessages();
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('messages')
+      .channel('messages-channel')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `sender_id=eq.${profile.employee_id},recipient_id=eq.${recipientId}`
+          filter: `or(and(sender_id=eq.${profile.employee_id},recipient_id=eq.${recipientId}),and(sender_id=eq.${recipientId},recipient_id=eq.${profile.employee_id}))`
         },
         (payload) => {
+          console.log('New message received:', payload);
           setMessages(current => [...current, payload.new as Message]);
         }
       )
@@ -78,6 +87,8 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
 
     setSending(true);
     try {
+      console.log('Sending message from', profile.employee_id, 'to', recipientId);
+      
       const { error } = await supabase.from('messages').insert({
         content: newMessage.trim(),
         sender_id: profile.employee_id,
@@ -112,25 +123,31 @@ export const ChatDialog = ({ isOpen, onClose, recipientId, recipientName }: Chat
         <div className="flex flex-col h-[400px]">
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender_id === profile?.employee_id ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.sender_id === profile?.employee_id
-                        ? 'bg-workwise-blue text-white'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    <p className="text-sm">{message.content}</p>
-                    <span className="text-xs opacity-70">
-                      {format(new Date(message.created_at), 'HH:mm')}
-                    </span>
-                  </div>
+              {messages.length === 0 ? (
+                <div className="text-center text-muted-foreground">
+                  No messages yet. Start the conversation!
                 </div>
-              ))}
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.sender_id === profile?.employee_id ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${
+                        message.sender_id === profile?.employee_id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <p className="text-sm">{message.content}</p>
+                      <span className="text-xs opacity-70">
+                        {format(new Date(message.created_at), 'HH:mm')}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </ScrollArea>
           <div className="flex items-center gap-2 p-4 border-t">
