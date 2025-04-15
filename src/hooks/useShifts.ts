@@ -124,6 +124,24 @@ export const useShifts = (currentDate: Date) => {
       if (updateError) {
         throw updateError;
       }
+      
+      // Record the shift change in history if user is authenticated
+      if (user) {
+        const { error: historyError } = await supabase
+          .from('shift_history')
+          .insert({
+            shift_id: shiftId.toString(),
+            modified_by: user.id,
+            action: 'day_changed',
+            changes: { new_day: newDay }
+          });
+          
+        if (historyError) {
+          console.error('Error recording shift history:', historyError);
+          // Don't throw here - we don't want to fail the whole operation
+          // just because history recording failed
+        }
+      }
     } catch (err) {
       const error = err as Error;
       console.error('Error in updateShiftDay:', error);
@@ -139,6 +157,42 @@ export const useShifts = (currentDate: Date) => {
     }
   };
 
+  const deleteShift = async (shiftId: string | number) => {
+    try {
+      // Update UI optimistically
+      setShifts(prevShifts => 
+        prevShifts.filter(shift => shift.id.toString() !== shiftId.toString())
+      );
+      
+      // Delete from database
+      const { error: deleteError } = await supabase
+        .from('shifts')
+        .delete()
+        .eq('id', shiftId.toString());
+        
+      if (deleteError) {
+        throw deleteError;
+      }
+      
+      toast({
+        title: "Success",
+        description: "Shift has been deleted.",
+      });
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error in deleteShift:', error);
+      
+      // Rollback optimistic update
+      fetchShifts();
+      
+      toast({
+        title: "Error",
+        description: "Failed to delete shift. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchShifts();
   }, [currentDate, fetchShifts]);
@@ -148,6 +202,7 @@ export const useShifts = (currentDate: Date) => {
     loading,
     error,
     updateShiftDay,
+    deleteShift,
     setShifts,
     fetchShifts
   };
