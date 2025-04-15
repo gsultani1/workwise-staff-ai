@@ -39,12 +39,23 @@ export const useShifts = (currentDate: Date) => {
 
   const formatTimeDisplay = (time: string) => {
     if (!time) return '';
-    const timeParts = time.split(':');
-    const hours = parseInt(timeParts[0], 10);
-    const minutes = timeParts[1];
-    const suffix = hours >= 12 ? 'PM' : 'AM';
-    const displayHour = hours % 12 || 12;
-    return `${displayHour}:${minutes} ${suffix}`;
+    
+    try {
+      const timeParts = time.split(':');
+      const hours = parseInt(timeParts[0], 10);
+      const minutes = timeParts[1];
+      
+      if (isNaN(hours)) {
+        return '';
+      }
+      
+      const suffix = hours >= 12 ? 'PM' : 'AM';
+      const displayHour = hours % 12 || 12;
+      return `${displayHour}:${minutes} ${suffix}`;
+    } catch (err) {
+      console.error('Error formatting time:', err, time);
+      return '';
+    }
   };
 
   const fetchShifts = useCallback(async () => {
@@ -95,6 +106,16 @@ export const useShifts = (currentDate: Date) => {
 
   const updateShiftDay = async (shiftId: string | number, newDay: number) => {
     try {
+      // Update the UI optimistically
+      setShifts(prevShifts => 
+        prevShifts.map(shift => 
+          shift.id.toString() === shiftId.toString() 
+            ? { ...shift, day: newDay }
+            : shift
+        )
+      );
+
+      // Then update the database
       const { error: updateError } = await supabase
         .from('shifts')
         .update({ day: newDay })
@@ -106,12 +127,15 @@ export const useShifts = (currentDate: Date) => {
     } catch (err) {
       const error = err as Error;
       console.error('Error in updateShiftDay:', error);
+      
+      // Rollback optimistic update if there was an error
+      fetchShifts();
+      
       toast({
         title: "Error",
         description: "Failed to update shift. Please try again.",
         variant: "destructive",
       });
-      throw error;
     }
   };
 
